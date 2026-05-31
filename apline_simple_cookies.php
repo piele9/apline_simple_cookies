@@ -321,7 +321,49 @@ class apline_simple_cookies extends Module
             }
         }
 
+        $this->maybeSeedGoogleAuthCookie(isset($categoryIds['necessary']) ? (int) $categoryIds['necessary'] : 0);
+
         return true;
+    }
+
+    /**
+     * If the APLINE Simple Google Auth module is installed, add its
+     * g_csrf_token cookie to the Necessary category. Optional and idempotent —
+     * never fails the install.
+     *
+     * @param int $necessaryCategoryId
+     */
+    private function maybeSeedGoogleAuthCookie($necessaryCategoryId)
+    {
+        if ($necessaryCategoryId <= 0) {
+            return;
+        }
+        try {
+            if (!Module::isInstalled('apline_simple_google_auth')) {
+                return;
+            }
+            $exists = (int) Db::getInstance()->getValue(
+                'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . self::TABLE_ENTRY . '` WHERE `cookie_name` = "g_csrf_token"'
+            );
+            if ($exists) {
+                return;
+            }
+            $now = date('Y-m-d H:i:s');
+            Db::getInstance()->insert(self::TABLE_ENTRY, [
+                'id_asco_category' => (int) $necessaryCategoryId,
+                'cookie_name' => 'g_csrf_token',
+                'provider' => 'Google LLC',
+                'purpose_pl' => 'Ochrona przed atakami CSRF podczas logowania przez Google (Google Identity Services).',
+                'purpose_en' => 'CSRF protection during Google sign-in (Google Identity Services).',
+                'expiration' => 'Sesja / Session',
+                'domain' => null,
+                'position' => 99,
+                'date_add' => $now,
+                'date_upd' => $now,
+            ]);
+        } catch (\Throwable $e) {
+            // Optional integration — ignore any failure.
+        }
     }
 
     /**
