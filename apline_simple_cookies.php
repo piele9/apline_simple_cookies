@@ -1178,16 +1178,36 @@ class apline_simple_cookies extends Module
     }
 
     /**
-     * Which third-party scripts may load for a granted decision. Real payload
-     * is built in CP08; until then this returns an empty list so the consent
-     * endpoint stays functional.
+     * Which third-party scripts may load for a granted decision. Returns a list
+     * of descriptors ({type, id} for known trackers, {type:'custom', html:...}
+     * for the raw snippets) — only for trackers whose consent category is
+     * granted and that are actually configured. banner.js turns each descriptor
+     * into a real <script>.
      *
-     * @param array $decision
+     * @param array $decision slug => bool
      *
      * @return array
      */
     public function scriptsForGrantedConsent(array $decision)
     {
-        return [];
+        $cfg = $this->getScriptsConfig();
+        $out = [];
+
+        foreach (['ga4', 'gtm', 'fb', 'hotjar'] as $type) {
+            $id = isset($cfg[$type]['id']) ? $cfg[$type]['id'] : '';
+            $category = isset($cfg[$type]['category']) ? $cfg[$type]['category'] : '';
+            if ($id !== '' && !empty($decision[$category])) {
+                $out[] = ['type' => $type, 'id' => $id];
+            }
+        }
+
+        foreach (['analytics', 'marketing', 'functional'] as $category) {
+            $html = isset($cfg['custom'][$category]) ? $cfg['custom'][$category] : '';
+            if ($html !== '' && !empty($decision[$category])) {
+                $out[] = ['type' => 'custom', 'html' => $html];
+            }
+        }
+
+        return $out;
     }
 }

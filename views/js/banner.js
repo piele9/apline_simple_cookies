@@ -135,9 +135,120 @@
     hideBanner();
   }
 
-  // Tracker injection — implemented in CP08.
+  /* ------------------------ tracker injection -------------------------- */
+
+  var loaded = {};
+
+  // Inject the scripts the visitor consented to. Idempotent: each tracker is
+  // injected at most once per page.
   function ascoLoadScripts(list) {
-    /* no-op until CP08 */
+    if (!Array.isArray(list)) {
+      return;
+    }
+    list.forEach(function (item) {
+      if (!item || !item.type) {
+        return;
+      }
+      var key = item.type + ':' + (item.id || (item.html ? item.html.length : ''));
+      if (loaded[key]) {
+        return;
+      }
+      loaded[key] = true;
+      try {
+        if (item.type === 'ga4') {
+          injectGA4(item.id);
+        } else if (item.type === 'gtm') {
+          injectGTM(item.id);
+        } else if (item.type === 'fb') {
+          injectFB(item.id);
+        } else if (item.type === 'hotjar') {
+          injectHotjar(item.id);
+        } else if (item.type === 'custom') {
+          injectCustom(item.html);
+        }
+      } catch (e) {
+        /* never break the page over a tracker */
+      }
+    });
+  }
+
+  function injectGA4(id) {
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { window.dataLayer.push(arguments); }
+    window.gtag = window.gtag || gtag;
+    window.gtag('js', new Date());
+    window.gtag('config', id);
+  }
+
+  function injectGTM(id) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(id);
+    document.head.appendChild(s);
+  }
+
+  function injectFB(id) {
+    if (!window.fbq) {
+      var n = window.fbq = function () {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      };
+      if (!window._fbq) { window._fbq = n; }
+      n.push = n;
+      n.loaded = true;
+      n.version = '2.0';
+      n.queue = [];
+      var t = document.createElement('script');
+      t.async = true;
+      t.src = 'https://connect.facebook.net/en_US/fbevents.js';
+      document.head.appendChild(t);
+    }
+    window.fbq('init', id);
+    window.fbq('track', 'PageView');
+  }
+
+  function injectHotjar(id) {
+    var hjid = parseInt(id, 10);
+    if (!hjid) {
+      return;
+    }
+    window.hj = window.hj || function () {
+      (window.hj.q = window.hj.q || []).push(arguments);
+    };
+    window._hjSettings = { hjid: hjid, hjsv: 6 };
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://static.hotjar.com/c/hotjar-' + hjid + '.js?sv=6';
+    document.head.appendChild(s);
+  }
+
+  // Raw admin HTML/JS: re-create <script> nodes so they actually execute
+  // (insertAdjacentHTML would inject them inert).
+  function injectCustom(html) {
+    if (!html) {
+      return;
+    }
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    Array.prototype.slice.call(tmp.childNodes).forEach(function (node) {
+      if (node.tagName && node.tagName.toLowerCase() === 'script') {
+        var ns = document.createElement('script');
+        if (node.src) {
+          ns.src = node.src;
+          ns.async = true;
+        } else {
+          ns.textContent = node.textContent;
+        }
+        document.head.appendChild(ns);
+      } else {
+        document.head.appendChild(node);
+      }
+    });
   }
 
   /* ------------------------------- init -------------------------------- */
@@ -159,9 +270,24 @@
     showBanner('main');
   }
 
-  // Client-side mirror of the server gating — used on reload (CP08 fills it in).
+  // Client-side mirror of the server gating — used on reload so already-granted
+  // trackers load without a round-trip. Must match scriptsForGrantedConsent().
   function scriptsForDecision(decision) {
-    return [];
+    var cfg = CFG.scripts || {};
+    var out = [];
+    ['ga4', 'gtm', 'fb', 'hotjar'].forEach(function (type) {
+      var tr = cfg[type] || {};
+      if (tr.id && decision && decision[tr.category]) {
+        out.push({ type: type, id: tr.id });
+      }
+    });
+    var custom = cfg.custom || {};
+    ['analytics', 'marketing', 'functional'].forEach(function (cat) {
+      if (custom[cat] && decision && decision[cat]) {
+        out.push({ type: 'custom', html: custom[cat] });
+      }
+    });
+    return out;
   }
 
   /* ----------------------------- handlers ------------------------------ */
