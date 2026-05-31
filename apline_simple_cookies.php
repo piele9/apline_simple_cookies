@@ -460,17 +460,278 @@ class apline_simple_cookies extends Module
 
     public function getContent()
     {
-        $categoryUrl = $this->context->link->getAdminLink(self::ADMIN_CATEGORY);
-        $entryUrl = $this->context->link->getAdminLink(self::ADMIN_ENTRY);
+        // Stream the consent-log CSV and stop before any other output.
+        if (Tools::isSubmit('exportLog')) {
+            $this->exportConsentLog();
+        }
 
-        $output = '<div class="panel">'
-            . '<h3><i class="icon-shield"></i> ' . $this->trans('APLINE Simple Cookies', [], 'Modules.Aplinesimplecookies.Admin') . '</h3>'
-            . '<p>' . $this->trans('GDPR/UODO compliant cookie consent. Full configuration is added in a later step.', [], 'Modules.Aplinesimplecookies.Admin') . '</p>'
-            . '<a class="btn btn-default" href="' . htmlspecialchars($categoryUrl, ENT_QUOTES) . '"><i class="icon-folder"></i> ' . $this->trans('Manage cookie categories', [], 'Modules.Aplinesimplecookies.Admin') . '</a> '
-            . '<a class="btn btn-default" href="' . htmlspecialchars($entryUrl, ENT_QUOTES) . '"><i class="icon-list"></i> ' . $this->trans('Manage individual cookies', [], 'Modules.Aplinesimplecookies.Admin') . '</a>'
-            . '</div>';
+        $output = '';
+
+        if (Tools::isSubmit(self::SUBMIT_TOKEN)) {
+            $errors = $this->saveConfiguration();
+            if (!empty($errors)) {
+                foreach ($errors as $error) {
+                    $output .= $this->displayError($error);
+                }
+            } else {
+                $output .= $this->displayConfirmation($this->trans('Settings updated.', [], 'Modules.Aplinesimplecookies.Admin'));
+            }
+        }
+
+        $this->context->smarty->assign($this->getConfigTemplateVars());
+        $output .= $this->display(__FILE__, 'views/templates/admin/configure.tpl');
 
         return $output . $this->renderLikeBox() . $this->renderAplineFooter();
+    }
+
+    /**
+     * URL of this module's configuration page (used as the form action and as
+     * the base for the CSV export link).
+     *
+     * @param array $extra extra query params
+     *
+     * @return string
+     */
+    public function getConfigPageUrl(array $extra = [])
+    {
+        return $this->context->link->getAdminLink('AdminModules', true, [], array_merge([
+            'configure' => $this->name,
+            'module_name' => $this->name,
+        ], $extra));
+    }
+
+    /**
+     * Validate and persist the configuration form. Returns an array of error
+     * messages (empty on success). Rejects invalid input — never silently
+     * coerces a bad value.
+     *
+     * @return string[]
+     */
+    protected function saveConfiguration()
+    {
+        $errors = [];
+        $d = 'Modules.Aplinesimplecookies.Admin';
+
+        // --- Appearance & behavior ---
+        $lang = (string) Tools::getValue('ASCO_DEFAULT_LANG');
+        if (!in_array($lang, ['pl', 'en'], true)) {
+            $errors[] = $this->trans('Invalid default language.', [], $d);
+        }
+        $position = (string) Tools::getValue('ASCO_BANNER_POSITION');
+        if (!in_array($position, ['bottom', 'center_modal'], true)) {
+            $errors[] = $this->trans('Invalid banner position.', [], $d);
+        }
+        $style = (string) Tools::getValue('ASCO_BANNER_STYLE');
+        if (!in_array($style, ['light', 'dark'], true)) {
+            $errors[] = $this->trans('Invalid banner style.', [], $d);
+        }
+        $primary = (string) Tools::getValue('ASCO_PRIMARY_BUTTON');
+        if (!in_array($primary, ['accept_all', 'save_choices'], true)) {
+            $errors[] = $this->trans('Invalid primary button.', [], $d);
+        }
+        $reprompt = (int) Tools::getValue('ASCO_REPROMPT_DAYS');
+        if ($reprompt < 30 || $reprompt > 730) {
+            $errors[] = $this->trans('Re-prompt period must be between 30 and 730 days.', [], $d);
+        }
+        $gpc = Tools::getValue('ASCO_RESPECT_GPC') ? 1 : 0;
+
+        // --- Audit log ---
+        $logConsents = Tools::getValue('ASCO_LOG_CONSENTS') ? 1 : 0;
+        $logIp = Tools::getValue('ASCO_LOG_IP') ? 1 : 0;
+        $retention = (int) Tools::getValue('ASCO_LOG_RETENTION_DAYS');
+        if ($retention < 30 || $retention > 3650) {
+            $errors[] = $this->trans('Log retention must be between 30 and 3650 days.', [], $d);
+        }
+
+        // --- Cookie policy ---
+        $policyUrl = trim((string) Tools::getValue('ASCO_POLICY_URL'));
+        if ($policyUrl !== '' && !Validate::isUrl($policyUrl) && !preg_match('#^/[\w\-/\.]*$#', $policyUrl)) {
+            $errors[] = $this->trans('The cookie policy URL is not valid.', [], $d);
+        }
+        $policyVersion = trim((string) Tools::getValue('ASCO_POLICY_VERSION'));
+        if (!preg_match('/^\d+\.\d+\.\d+$/', $policyVersion)) {
+            $errors[] = $this->trans('The policy version must look like 1.0.0 (digits and dots).', [], $d);
+        }
+
+        // --- Banner copy (PL + EN) ---
+        $copyKeys = [
+            'ASCO_COPY_TITLE_PL', 'ASCO_COPY_TITLE_EN', 'ASCO_COPY_BODY_PL', 'ASCO_COPY_BODY_EN',
+            'ASCO_COPY_BTN_ACCEPT_PL', 'ASCO_COPY_BTN_ACCEPT_EN', 'ASCO_COPY_BTN_REJECT_PL', 'ASCO_COPY_BTN_REJECT_EN',
+            'ASCO_COPY_BTN_PREFS_PL', 'ASCO_COPY_BTN_PREFS_EN', 'ASCO_COPY_BTN_SAVE_PL', 'ASCO_COPY_BTN_SAVE_EN',
+            'ASCO_COPY_FOOTER_LINK_PL', 'ASCO_COPY_FOOTER_LINK_EN',
+        ];
+
+        // Let module-specific extensions (Custom Scripts, CP05) add their own
+        // validation/persistence without rewriting this method.
+        $errors = array_merge($errors, $this->saveCustomScripts());
+
+        if (!empty($errors)) {
+            return $errors;
+        }
+
+        Configuration::updateValue('ASCO_DEFAULT_LANG', $lang);
+        Configuration::updateValue('ASCO_BANNER_POSITION', $position);
+        Configuration::updateValue('ASCO_BANNER_STYLE', $style);
+        Configuration::updateValue('ASCO_PRIMARY_BUTTON', $primary);
+        Configuration::updateValue('ASCO_REPROMPT_DAYS', $reprompt);
+        Configuration::updateValue('ASCO_RESPECT_GPC', $gpc);
+        Configuration::updateValue('ASCO_LOG_CONSENTS', $logConsents);
+        Configuration::updateValue('ASCO_LOG_IP', $logIp);
+        Configuration::updateValue('ASCO_LOG_RETENTION_DAYS', $retention);
+        Configuration::updateValue('ASCO_POLICY_URL', $policyUrl);
+        Configuration::updateValue('ASCO_POLICY_VERSION', $policyVersion);
+
+        foreach ($copyKeys as $key) {
+            // Copy is admin-trusted; store the raw trimmed value (escaped on render).
+            Configuration::updateValue($key, trim((string) Tools::getValue($key)), true);
+        }
+
+        $this->persistCustomScripts();
+
+        return [];
+    }
+
+    /**
+     * Hook for CP05 (Custom Scripts) to validate its own fields. Returns an
+     * array of error messages. No-op until CP05 fills it in.
+     *
+     * @return string[]
+     */
+    protected function saveCustomScripts()
+    {
+        return [];
+    }
+
+    /**
+     * Hook for CP05 (Custom Scripts) to persist its own fields after the main
+     * configuration validates. No-op until CP05 fills it in.
+     */
+    protected function persistCustomScripts()
+    {
+    }
+
+    /**
+     * All values the configuration template needs.
+     *
+     * @return array
+     */
+    protected function getConfigTemplateVars()
+    {
+        $conf = Configuration::getMultiple(array_keys($this->getConfigDefaults()));
+
+        return [
+            'asco_conf' => $conf,
+            'asco_form_action' => $this->getConfigPageUrl(),
+            'asco_export_url' => $this->getConfigPageUrl(['exportLog' => 1]),
+            'asco_category_url' => $this->context->link->getAdminLink(self::ADMIN_CATEGORY),
+            'asco_entry_url' => $this->context->link->getAdminLink(self::ADMIN_ENTRY),
+            'asco_stats' => $this->getConsentStats(),
+            'asco_submit_token' => self::SUBMIT_TOKEN,
+            'asco_category_options' => $this->getCategorySlugOptions(),
+        ];
+    }
+
+    /**
+     * Active category slugs with their EN name, for the Custom Scripts category
+     * selects (CP05) and any other admin dropdown.
+     *
+     * @return array
+     */
+    public function getCategorySlugOptions()
+    {
+        $options = [];
+        try {
+            $rows = Db::getInstance()->executeS(
+                'SELECT `slug`, `name_en` FROM `' . _DB_PREFIX_ . self::TABLE_CATEGORY . '`
+                 WHERE `active` = 1 ORDER BY `position` ASC'
+            );
+            if (is_array($rows)) {
+                foreach ($rows as $row) {
+                    $options[$row['slug']] = $row['name_en'];
+                }
+            }
+        } catch (\Throwable $e) {
+            // empty — selects still render
+        }
+
+        return $options;
+    }
+
+    /**
+     * Consent-log statistics for the last 30 days, broken down by source.
+     * Robust GROUP BY (no JSON parsing) so it never errors on odd data.
+     *
+     * @return array
+     */
+    protected function getConsentStats()
+    {
+        $stats = ['total' => 0, 'by_source' => ['banner' => 0, 'prefs' => 0, 'footer_link' => 0, 'gpc' => 0]];
+
+        try {
+            $since = date('Y-m-d H:i:s', time() - 30 * 86400);
+            $rows = Db::getInstance()->executeS(
+                'SELECT `source`, COUNT(*) AS c FROM `' . _DB_PREFIX_ . self::TABLE_LOG . '`
+                 WHERE `date_add` >= "' . pSQL($since) . '" GROUP BY `source`'
+            );
+            if (is_array($rows)) {
+                foreach ($rows as $row) {
+                    $count = (int) $row['c'];
+                    $stats['total'] += $count;
+                    if (isset($stats['by_source'][$row['source']])) {
+                        $stats['by_source'][$row['source']] = $count;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // table may be missing during a broken state — show zeros
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Stream the consent log as a CSV download and exit. Uses php://output so
+     * a large log never exhausts memory.
+     */
+    protected function exportConsentLog()
+    {
+        $from = Tools::getValue('from');
+        $to = Tools::getValue('to');
+
+        $where = '1';
+        if (Validate::isDate($from)) {
+            $where .= ' AND `date_add` >= "' . pSQL($from) . ' 00:00:00"';
+        }
+        if (Validate::isDate($to)) {
+            $where .= ' AND `date_add` <= "' . pSQL($to) . ' 23:59:59"';
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="asco_consent_log_' . date('Ymd_His') . '.csv"');
+
+        $out = fopen('php://output', 'w');
+        // UTF-8 BOM so Excel opens Polish characters correctly.
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['id', 'date_add', 'visitor_token', 'id_customer', 'decision', 'policy_version', 'ip_hash', 'language', 'source', 'user_agent']);
+
+        try {
+            $rows = Db::getInstance()->executeS(
+                'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_LOG . '` WHERE ' . $where . ' ORDER BY `date_add` DESC'
+            );
+            if (is_array($rows)) {
+                foreach ($rows as $row) {
+                    fputcsv($out, [
+                        $row['id_asco_consent_log'], $row['date_add'], $row['visitor_token'], $row['id_customer'],
+                        $row['decision'], $row['policy_version'], $row['ip_hash'], $row['language'], $row['source'], $row['user_agent'],
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            // nothing to add — the header row is still downloaded
+        }
+
+        fclose($out);
+        exit;
     }
 
     /**
