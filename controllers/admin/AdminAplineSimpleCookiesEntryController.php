@@ -1,0 +1,328 @@
+<?php
+/**
+ * APLINE Simple Cookies module for PrestaShop 9.
+ *
+ * Admin CRUD for individual cookie entries (cookie name, provider, purpose
+ * PL+EN, expiration, domain) attached to a category.
+ *
+ * @author    APLINE Arkadiusz Pielechowski
+ * @copyright APLINE Arkadiusz Pielechowski
+ * @license   Custom Attribution License v1.0 - see LICENSE.md
+ */
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
+require_once _PS_MODULE_DIR_ . 'apline_simple_cookies/classes/AplineSimpleCookiesEntry.php';
+require_once _PS_MODULE_DIR_ . 'apline_simple_cookies/classes/AplineSimpleCookiesCategory.php';
+
+class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
+{
+    const MAX_STRING = 255;
+    const MAX_EXPIRATION = 64;
+    const DOMAIN = 'Modules.Aplinesimplecookies.Admin';
+
+    public function __construct()
+    {
+        $this->bootstrap = true;
+        $this->table = 'asco_entry';
+        $this->className = 'AplineSimpleCookiesEntry';
+        $this->identifier = 'id_asco_entry';
+        $this->position_identifier = 'id_asco_entry';
+        $this->lang = false;
+        $this->allow_export = false;
+
+        parent::__construct();
+
+        // Show the (English) category name on the list via a join.
+        $this->_select = 'c.`name_en` AS category_name';
+        $this->_join = 'LEFT JOIN `' . _DB_PREFIX_ . 'asco_category` c ON c.`id_asco_category` = a.`id_asco_category`';
+
+        $this->fields_list = [
+            'id_asco_entry' => [
+                'title' => $this->trans('ID', [], 'Admin.Global'),
+                'align' => 'center',
+                'class' => 'fixed-width-xs',
+            ],
+            'cookie_name' => [
+                'title' => $this->trans('Cookie name', [], self::DOMAIN),
+            ],
+            'provider' => [
+                'title' => $this->trans('Provider', [], self::DOMAIN),
+            ],
+            'category_name' => [
+                'title' => $this->trans('Category', [], self::DOMAIN),
+                'search' => false,
+                'orderby' => false,
+            ],
+            'expiration' => [
+                'title' => $this->trans('Expiration', [], self::DOMAIN),
+                'search' => false,
+            ],
+            'position' => [
+                'title' => $this->trans('Position', [], self::DOMAIN),
+                'align' => 'center',
+                'position' => 'position',
+                'search' => false,
+            ],
+        ];
+
+        $this->_defaultOrderBy = 'id_asco_category';
+        $this->_defaultOrderWay = 'ASC';
+
+        $this->addRowAction('edit');
+        $this->addRowAction('delete');
+        $this->bulk_actions = [
+            'delete' => [
+                'text' => $this->trans('Delete selected', [], 'Admin.Actions'),
+                'confirm' => $this->trans('Delete selected items?', [], 'Admin.Notifications.Warning'),
+            ],
+        ];
+    }
+
+    public function setMedia($isNewTheme = false)
+    {
+        parent::setMedia($isNewTheme);
+        $this->addJqueryUI('ui.sortable');
+    }
+
+    /**
+     * @return string
+     */
+    private function getConfigUrl()
+    {
+        return $this->context->link->getAdminLink('AdminModules', true, [], [
+            'configure' => 'apline_simple_cookies',
+            'module_name' => 'apline_simple_cookies',
+        ]);
+    }
+
+    public function initPageHeaderToolbar()
+    {
+        parent::initPageHeaderToolbar();
+
+        $this->page_header_toolbar_btn['back_to_config'] = [
+            'href' => $this->getConfigUrl(),
+            'desc' => $this->trans('Back to configuration', [], self::DOMAIN),
+            'icon' => 'process-icon-back',
+        ];
+    }
+
+    public function renderList()
+    {
+        $list = parent::renderList();
+
+        $back = '<div style="margin:10px 0;"><a class="btn btn-default" href="'
+            . htmlspecialchars($this->getConfigUrl(), ENT_QUOTES)
+            . '"><i class="icon-chevron-left"></i> '
+            . $this->trans('Back to configuration', [], self::DOMAIN)
+            . '</a></div>';
+
+        $credit = method_exists($this->module, 'renderAplineFooter')
+            ? $this->module->renderAplineFooter()
+            : '';
+
+        return $back . $list . $credit;
+    }
+
+    /**
+     * @return array category options for the form select
+     */
+    private function getCategoryOptions()
+    {
+        $options = [];
+        try {
+            $rows = Db::getInstance()->executeS(
+                'SELECT `id_asco_category`, `name_en` FROM `' . _DB_PREFIX_ . 'asco_category`
+                 ORDER BY `position` ASC'
+            );
+            if (is_array($rows)) {
+                foreach ($rows as $row) {
+                    $options[] = [
+                        'id_asco_category' => (int) $row['id_asco_category'],
+                        'name' => $row['name_en'] . ' (' . $row['id_asco_category'] . ')',
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            // empty options — form still renders
+        }
+
+        return $options;
+    }
+
+    public function renderForm()
+    {
+        $this->fields_form = [
+            'legend' => [
+                'title' => $this->trans('Cookie', [], self::DOMAIN),
+                'icon' => 'icon-cube',
+            ],
+            'input' => [
+                [
+                    'type' => 'select',
+                    'label' => $this->trans('Category', [], self::DOMAIN),
+                    'name' => 'id_asco_category',
+                    'required' => true,
+                    'options' => [
+                        'query' => $this->getCategoryOptions(),
+                        'id' => 'id_asco_category',
+                        'name' => 'name',
+                    ],
+                ],
+                [
+                    'type' => 'text',
+                    'label' => $this->trans('Cookie name', [], self::DOMAIN),
+                    'name' => 'cookie_name',
+                    'required' => true,
+                    'desc' => $this->trans('E.g. _ga, _fbp, PHPSESSID.', [], self::DOMAIN),
+                ],
+                [
+                    'type' => 'text',
+                    'label' => $this->trans('Provider', [], self::DOMAIN),
+                    'name' => 'provider',
+                    'required' => true,
+                    'desc' => $this->trans('Who reads the cookie. E.g. Google LLC, Meta Platforms, Your company.', [], self::DOMAIN),
+                ],
+                [
+                    'type' => 'textarea',
+                    'label' => $this->trans('Purpose (PL)', [], self::DOMAIN),
+                    'name' => 'purpose_pl',
+                    'required' => true,
+                    'rows' => 2,
+                ],
+                [
+                    'type' => 'textarea',
+                    'label' => $this->trans('Purpose (EN)', [], self::DOMAIN),
+                    'name' => 'purpose_en',
+                    'required' => true,
+                    'rows' => 2,
+                ],
+                [
+                    'type' => 'text',
+                    'label' => $this->trans('Expiration', [], self::DOMAIN),
+                    'name' => 'expiration',
+                    'required' => true,
+                    'desc' => $this->trans('Free text. E.g. 2 lata / 2 years, 30 dni / 30 days, Sesja / Session.', [], self::DOMAIN),
+                ],
+                [
+                    'type' => 'text',
+                    'label' => $this->trans('Domain', [], self::DOMAIN),
+                    'name' => 'domain',
+                    'desc' => $this->trans('Optional. The domain that sets the cookie. E.g. .google-analytics.com.', [], self::DOMAIN),
+                ],
+            ],
+            'submit' => ['title' => $this->trans('Save', [], 'Admin.Actions')],
+        ];
+
+        return parent::renderForm();
+    }
+
+    public function postProcess()
+    {
+        $isAdd = Tools::isSubmit('submitAdd' . $this->table) && !Tools::getValue($this->identifier);
+        $isUpdate = Tools::isSubmit('submitAdd' . $this->table) && Tools::getValue($this->identifier);
+
+        if ($isAdd || $isUpdate) {
+            if ($isUpdate) {
+                $existing = new AplineSimpleCookiesEntry((int) Tools::getValue($this->identifier));
+                if (!Validate::isLoadedObject($existing)) {
+                    $this->errors[] = $this->trans('The cookie you are trying to edit does not exist.', [], self::DOMAIN);
+
+                    return false;
+                }
+            }
+
+            if (!$this->validateSubmission()) {
+                $this->display = $isUpdate ? 'edit' : 'add';
+
+                return false;
+            }
+        }
+
+        return parent::postProcess();
+    }
+
+    /**
+     * Reject invalid input (never silently truncate).
+     *
+     * @return bool
+     */
+    private function validateSubmission()
+    {
+        $idCategory = (int) Tools::getValue('id_asco_category');
+        $cookieName = trim((string) Tools::getValue('cookie_name'));
+        $provider = trim((string) Tools::getValue('provider'));
+        $purposePl = trim((string) Tools::getValue('purpose_pl'));
+        $purposeEn = trim((string) Tools::getValue('purpose_en'));
+        $expiration = trim((string) Tools::getValue('expiration'));
+        $domain = trim((string) Tools::getValue('domain'));
+
+        if ($cookieName === '') {
+            $this->errors[] = $this->trans('The field "Cookie name" is required.', [], self::DOMAIN);
+        }
+        if ($provider === '') {
+            $this->errors[] = $this->trans('The field "Provider" is required.', [], self::DOMAIN);
+        }
+        if ($purposePl === '') {
+            $this->errors[] = $this->trans('The field "Purpose (PL)" is required.', [], self::DOMAIN);
+        }
+        if ($purposeEn === '') {
+            $this->errors[] = $this->trans('The field "Purpose (EN)" is required.', [], self::DOMAIN);
+        }
+        if ($expiration === '') {
+            $this->errors[] = $this->trans('The field "Expiration" is required.', [], self::DOMAIN);
+        }
+
+        foreach (['Cookie name' => $cookieName, 'Provider' => $provider, 'Domain' => $domain] as $label => $value) {
+            if (mb_strlen($value) > self::MAX_STRING) {
+                $this->errors[] = $this->trans('The field "%s" exceeds the maximum length of 255 characters.', [$label], self::DOMAIN);
+            }
+        }
+        if (mb_strlen($expiration) > self::MAX_EXPIRATION) {
+            $this->errors[] = $this->trans('The field "Expiration" exceeds the maximum length of 64 characters.', [], self::DOMAIN);
+        }
+
+        // Category must exist.
+        $category = new AplineSimpleCookiesCategory($idCategory);
+        if (!$idCategory || !Validate::isLoadedObject($category)) {
+            $this->errors[] = $this->trans('Please choose a valid category.', [], self::DOMAIN);
+        }
+
+        if (!empty($this->errors)) {
+            return false;
+        }
+
+        $_POST['cookie_name'] = $cookieName;
+        $_POST['provider'] = $provider;
+        $_POST['expiration'] = $expiration;
+        $_POST['domain'] = $domain;
+
+        return true;
+    }
+
+    public function ajaxProcessUpdatePositions()
+    {
+        $positions = Tools::getValue($this->table);
+
+        if (!is_array($positions)) {
+            die(json_encode(['success' => false]));
+        }
+
+        $pos = 1;
+        foreach ($positions as $value) {
+            $parts = explode('_', (string) $value);
+            $id = (int) end($parts);
+            if (!$id) {
+                continue;
+            }
+            Db::getInstance()->update(
+                'asco_entry',
+                ['position' => $pos++],
+                'id_asco_entry = ' . $id
+            );
+        }
+
+        die(json_encode(['success' => true]));
+    }
+}
