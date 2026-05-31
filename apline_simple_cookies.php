@@ -1024,4 +1024,170 @@ class apline_simple_cookies extends Module
             ],
         ];
     }
+
+    /* --------------------------------------------------------------------- */
+    /* Consent persistence (called from the /consent front controller)       */
+    /* --------------------------------------------------------------------- */
+
+    /**
+     * Persist a consent decision: refresh the consent cookie, keep a visitor
+     * token, and (optionally) write an audit-log row. Returns the normalized
+     * decision (necessary forced true, unknown categories dropped).
+     *
+     * @param array  $decision slug => bool
+     * @param string $source   banner|prefs|footer_link|gpc
+     *
+     * @return array
+     */
+    public function saveConsent(array $decision, $source)
+    {
+        $token = $this->getOrCreateVisitorToken();
+        $clean = $this->normalizeDecision($decision);
+        $version = (string) Configuration::get('ASCO_POLICY_VERSION');
+
+        $cookieValue = json_encode(['v' => $version, 'd' => $clean, 't' => time()]);
+        $days = (int) Configuration::get('ASCO_REPROMPT_DAYS');
+        $this->setConsentCookie('asco_consent', $cookieValue, time() + 86400 * max(1, $days));
+
+        if ((int) Configuration::get('ASCO_LOG_CONSENTS')) {
+            $this->logConsent($token, $clean, (string) $source);
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Keep only known active category slugs; necessary categories are always
+     * granted regardless of what the client sent.
+     *
+     * @param array $decision
+     *
+     * @return array
+     */
+    private function normalizeDecision(array $decision)
+    {
+        $clean = [];
+        foreach (AplineSimpleCookiesCategory::getActiveCategories('pl') as $cat) {
+            $slug = $cat['slug'];
+            $clean[$slug] = !empty($cat['is_necessary']) ? true : !empty($decision[$slug]);
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Read or create the anonymous visitor token (stored in the asco_visitor
+     * cookie for one year).
+     *
+     * @return string
+     */
+    private function getOrCreateVisitorToken()
+    {
+        if (!empty($_COOKIE['asco_visitor']) && preg_match('/^[a-f0-9]{16,64}$/i', (string) $_COOKIE['asco_visitor'])) {
+            return (string) $_COOKIE['asco_visitor'];
+        }
+        $token = $this->generateUuid();
+        $this->setConsentCookie('asco_visitor', $token, time() + 86400 * 365);
+
+        return $token;
+    }
+
+    /**
+     * @return string 32 hex chars
+     */
+    private function generateUuid()
+    {
+        try {
+            return bin2hex(random_bytes(16));
+        } catch (\Throwable $e) {
+            return md5(uniqid((string) microtime(true), true));
+        }
+    }
+
+    /**
+     * Set a front-end cookie with sane security attributes. Must be called
+     * before any output (i.e. from the AJAX consent endpoint).
+     *
+     * @param string $name
+     * @param string $value
+     * @param int    $expire
+     */
+    private function setConsentCookie($name, $value, $expire)
+    {
+        $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
+
+        // JS must read asco_consent at runtime, so httponly stays false.
+        setcookie($name, $value, [
+            'expires' => $expire,
+            'path' => '/',
+            'secure' => $secure,
+            'httponly' => false,
+            'samesite' => 'Lax',
+        ]);
+        $_COOKIE[$name] = $value;
+    }
+
+    /**
+     * Write one consent audit-log row and prune expired rows.
+     *
+     * @param string $token
+     * @param array  $decision
+     * @param string $source
+     */
+    private function logConsent($token, array $decision, $source)
+    {
+        try {
+            $ipHash = null;
+            if ((int) Configuration::get('ASCO_LOG_IP') && !empty($_SERVER['REMOTE_ADDR'])) {
+                $salt = (string) Configuration::get('ASCO_LOG_IP_SALT');
+                $ipHash = hash('sha256', $_SERVER['REMOTE_ADDR'] . $salt);
+            }
+            $idCustomer = ($this->context->customer && $this->context->customer->id)
+                ? (int) $this->context->customer->id : null;
+
+            Db::getInstance()->insert(self::TABLE_LOG, [
+                'visitor_token' => pSQL($token),
+                'id_customer' => $idCustomer,
+                'decision' => pSQL(json_encode($decision)),
+                'policy_version' => pSQL((string) Configuration::get('ASCO_POLICY_VERSION')),
+                'ip_hash' => $ipHash ? pSQL($ipHash) : null,
+                'user_agent' => pSQL(Tools::substr((string) (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''), 0, 512)),
+                'language' => pSQL($this->resolveLang()),
+                'source' => pSQL($source),
+                'date_add' => date('Y-m-d H:i:s'),
+            ]);
+
+            $this->cleanupOldLogs();
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog('apline_simple_cookies log: ' . $e->getMessage(), 3);
+        }
+    }
+
+    /**
+     * Delete consent-log rows older than the configured retention window.
+     */
+    private function cleanupOldLogs()
+    {
+        $days = (int) Configuration::get('ASCO_LOG_RETENTION_DAYS');
+        if ($days <= 0) {
+            return;
+        }
+        $cutoff = date('Y-m-d H:i:s', time() - $days * 86400);
+        Db::getInstance()->delete(self::TABLE_LOG, '`date_add` < "' . pSQL($cutoff) . '"');
+    }
+
+    /**
+     * Which third-party scripts may load for a granted decision. Real payload
+     * is built in CP08; until then this returns an empty list so the consent
+     * endpoint stays functional.
+     *
+     * @param array $decision
+     *
+     * @return array
+     */
+    public function scriptsForGrantedConsent(array $decision)
+    {
+        return [];
+    }
 }
