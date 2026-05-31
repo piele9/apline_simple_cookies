@@ -118,8 +118,98 @@
     </table>
   </div>
 
-  {* ---- Custom Scripts placeholder — populated in CP05 ---- *}
-  {if isset($asco_custom_scripts_section)}{$asco_custom_scripts_section nofilter}{/if}
+  {* ---- Third-party scripts (Custom Scripts) ---- *}
+  <div class="panel">
+    <h3><i class="icon-plug"></i> {l s='Third-party scripts (trackers)' d='Modules.Aplinesimplecookies.Admin'}</h3>
+    <p class="help-block">{l s='Enter only the ID for each service — the module generates the script and loads it only after the visitor consents to the chosen category. Not sure where to find an ID? Click "How to add this".' d='Modules.Aplinesimplecookies.Admin'}</p>
+
+    {* Google Analytics 4 *}
+    <div class="form-group">
+      <label>{l s='Google Analytics 4 — Measurement ID' d='Modules.Aplinesimplecookies.Admin'}
+        <a href="#" class="asco-help-link" data-asco-help="ga4"><i class="icon-question-circle"></i> {l s='How to add this' d='Modules.Aplinesimplecookies.Admin'}</a>
+      </label>
+      <div class="row">
+        <div class="col-lg-6"><input type="text" class="form-control" name="ASCO_GA4_ID" value="{$asco_conf.ASCO_GA4_ID|escape:'html':'UTF-8'}" placeholder="G-XXXXXXXXXX"></div>
+        <div class="col-lg-6">
+          <select name="ASCO_GA4_CATEGORY" class="form-control">
+            {foreach from=$asco_category_options key=slug item=cname}
+              <option value="{$slug|escape:'html':'UTF-8'}" {if $asco_conf.ASCO_GA4_CATEGORY == $slug}selected{/if}>{$cname|escape:'html':'UTF-8'} ({$slug|escape:'html':'UTF-8'})</option>
+            {/foreach}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {* Google Tag Manager *}
+    <div class="form-group">
+      <label>{l s='Google Tag Manager — Container ID' d='Modules.Aplinesimplecookies.Admin'}
+        <a href="#" class="asco-help-link" data-asco-help="gtm"><i class="icon-question-circle"></i> {l s='How to add this' d='Modules.Aplinesimplecookies.Admin'}</a>
+      </label>
+      <div class="row">
+        <div class="col-lg-6"><input type="text" class="form-control" name="ASCO_GTM_ID" value="{$asco_conf.ASCO_GTM_ID|escape:'html':'UTF-8'}" placeholder="GTM-XXXXXXX"></div>
+        <div class="col-lg-6">
+          <select name="ASCO_GTM_CATEGORY" class="form-control">
+            {foreach from=$asco_category_options key=slug item=cname}
+              <option value="{$slug|escape:'html':'UTF-8'}" {if $asco_conf.ASCO_GTM_CATEGORY == $slug}selected{/if}>{$cname|escape:'html':'UTF-8'} ({$slug|escape:'html':'UTF-8'})</option>
+            {/foreach}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {* Facebook Pixel *}
+    <div class="form-group">
+      <label>{l s='Facebook (Meta) Pixel — Pixel ID' d='Modules.Aplinesimplecookies.Admin'}
+        <a href="#" class="asco-help-link" data-asco-help="fb"><i class="icon-question-circle"></i> {l s='How to add this' d='Modules.Aplinesimplecookies.Admin'}</a>
+      </label>
+      <div class="row">
+        <div class="col-lg-6"><input type="text" class="form-control" name="ASCO_FB_PIXEL_ID" value="{$asco_conf.ASCO_FB_PIXEL_ID|escape:'html':'UTF-8'}" placeholder="123456789012345"></div>
+        <div class="col-lg-6">
+          <select name="ASCO_FB_PIXEL_CATEGORY" class="form-control">
+            {foreach from=$asco_category_options key=slug item=cname}
+              <option value="{$slug|escape:'html':'UTF-8'}" {if $asco_conf.ASCO_FB_PIXEL_CATEGORY == $slug}selected{/if}>{$cname|escape:'html':'UTF-8'} ({$slug|escape:'html':'UTF-8'})</option>
+            {/foreach}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {* Hotjar *}
+    <div class="form-group">
+      <label>{l s='Hotjar — Site ID' d='Modules.Aplinesimplecookies.Admin'}
+        <a href="#" class="asco-help-link" data-asco-help="hotjar"><i class="icon-question-circle"></i> {l s='How to add this' d='Modules.Aplinesimplecookies.Admin'}</a>
+      </label>
+      <div class="row">
+        <div class="col-lg-6"><input type="text" class="form-control" name="ASCO_HOTJAR_ID" value="{$asco_conf.ASCO_HOTJAR_ID|escape:'html':'UTF-8'}" placeholder="1234567"></div>
+        <div class="col-lg-6">
+          <select name="ASCO_HOTJAR_CATEGORY" class="form-control">
+            {foreach from=$asco_category_options key=slug item=cname}
+              <option value="{$slug|escape:'html':'UTF-8'}" {if $asco_conf.ASCO_HOTJAR_CATEGORY == $slug}selected{/if}>{$cname|escape:'html':'UTF-8'} ({$slug|escape:'html':'UTF-8'})</option>
+            {/foreach}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+    <p class="help-block"><strong>{l s='Custom snippets' d='Modules.Aplinesimplecookies.Admin'}</strong> &mdash;
+      {l s='For anything that is not in the list above (e.g. LinkedIn Insight Tag, Pinterest Tag). Paste plain HTML/JS; it is injected into the page only after the visitor consents to that category.' d='Modules.Aplinesimplecookies.Admin'}
+    </p>
+    <div class="alert alert-warning">{l s='Anything you paste here will run on the front-end after the user consents to this category. Only paste code you trust.' d='Modules.Aplinesimplecookies.Admin'}</div>
+
+    <div class="form-group">
+      <label>{l s='Custom HTML/JS — Analytics consent' d='Modules.Aplinesimplecookies.Admin'}</label>
+      <textarea class="form-control" rows="3" name="ASCO_CUSTOM_HEAD_ANALYTICS">{$asco_conf.ASCO_CUSTOM_HEAD_ANALYTICS|escape:'html':'UTF-8'}</textarea>
+    </div>
+    <div class="form-group">
+      <label>{l s='Custom HTML/JS — Marketing consent' d='Modules.Aplinesimplecookies.Admin'}</label>
+      <textarea class="form-control" rows="3" name="ASCO_CUSTOM_HEAD_MARKETING">{$asco_conf.ASCO_CUSTOM_HEAD_MARKETING|escape:'html':'UTF-8'}</textarea>
+    </div>
+    <div class="form-group">
+      <label>{l s='Custom HTML/JS — Functional consent' d='Modules.Aplinesimplecookies.Admin'}</label>
+      <textarea class="form-control" rows="3" name="ASCO_CUSTOM_HEAD_FUNCTIONAL">{$asco_conf.ASCO_CUSTOM_HEAD_FUNCTIONAL|escape:'html':'UTF-8'}</textarea>
+    </div>
+  </div>
 
   {* ---- Cookie policy ---- *}
   <div class="panel">
@@ -128,7 +218,7 @@
       <label>{l s='Cookie policy URL' d='Modules.Aplinesimplecookies.Admin'}</label>
       <input type="text" name="ASCO_POLICY_URL" class="form-control" value="{$asco_conf.ASCO_POLICY_URL|escape:'html':'UTF-8'}" placeholder="/content/8-polityka-cookies">
       <p class="help-block">{l s='URL to your CMS page with the full cookie policy.' d='Modules.Aplinesimplecookies.Admin'}</p>
-      {if isset($asco_policy_template_button)}{$asco_policy_template_button nofilter}{/if}
+      <button type="button" class="btn btn-default" id="asco-show-policy"><i class="icon-clipboard"></i> {l s='Show example template' d='Modules.Aplinesimplecookies.Admin'}</button>
     </div>
     <div class="form-group">
       <label>{l s='Policy version' d='Modules.Aplinesimplecookies.Admin'}</label>
@@ -180,3 +270,108 @@
   </div>
 
 </form>
+
+{* ============================ Help modals ============================ *}
+<div class="asco-modal" id="asco-modal-ga4">
+  <div class="asco-modal-box">
+    <button type="button" class="asco-modal-close" data-asco-close>&times;</button>
+    <h3>Google Analytics 4 (GA4)</h3>
+    <h4>PL — Jak znaleźć i wkleić Identyfikator pomiaru</h4>
+    <ol>
+      <li>Wejdź na <code>https://analytics.google.com</code> i zaloguj się.</li>
+      <li>Kliknij <strong>Administracja</strong> (koło zębate) → <strong>Strumienie danych</strong> → wybierz strumień typu <em>Web</em>.</li>
+      <li>Skopiuj <strong>Identyfikator pomiaru</strong> — wygląda tak: <code>G-XXXXXXXXXX</code>.</li>
+      <li>Wklej go w pole <strong>Google Analytics 4 — Measurement ID</strong> i wybierz kategorię zgody (domyślnie <code>analytics</code>).</li>
+      <li>Zapisz. GA4 załaduje się dopiero, gdy odwiedzający zaakceptuje tę kategorię.</li>
+    </ol>
+    <h4>EN — How to find and paste the Measurement ID</h4>
+    <ol>
+      <li>Go to <code>https://analytics.google.com</code> and sign in.</li>
+      <li>Click <strong>Admin</strong> (gear) → <strong>Data Streams</strong> → pick your <em>Web</em> stream.</li>
+      <li>Copy the <strong>Measurement ID</strong> — it looks like <code>G-XXXXXXXXXX</code>.</li>
+      <li>Paste it into the <strong>Google Analytics 4</strong> field and choose a consent category (default <code>analytics</code>).</li>
+      <li>Save. GA4 loads only after the visitor consents to that category.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="asco-modal" id="asco-modal-gtm">
+  <div class="asco-modal-box">
+    <button type="button" class="asco-modal-close" data-asco-close>&times;</button>
+    <h3>Google Tag Manager (GTM)</h3>
+    <h4>PL — Jak znaleźć Identyfikator kontenera</h4>
+    <ol>
+      <li>Wejdź na <code>https://tagmanager.google.com</code> i wybierz konto/kontener.</li>
+      <li>U góry, obok nazwy kontenera, znajdziesz identyfikator <code>GTM-XXXXXXX</code>.</li>
+      <li>Wklej go w pole <strong>Google Tag Manager</strong>, wybierz kategorię (domyślnie <code>analytics</code>) i zapisz.</li>
+    </ol>
+    <h4>EN — How to find the Container ID</h4>
+    <ol>
+      <li>Go to <code>https://tagmanager.google.com</code> and select your account/container.</li>
+      <li>The container ID <code>GTM-XXXXXXX</code> is shown next to the container name.</li>
+      <li>Paste it into the <strong>Google Tag Manager</strong> field, pick a category and save.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="asco-modal" id="asco-modal-fb">
+  <div class="asco-modal-box">
+    <button type="button" class="asco-modal-close" data-asco-close>&times;</button>
+    <h3>Facebook (Meta) Pixel</h3>
+    <h4>PL — Jak znaleźć Identyfikator pixela</h4>
+    <ol>
+      <li>Wejdź na <code>https://business.facebook.com</code> → <strong>Menedżer zdarzeń</strong> (Events Manager).</li>
+      <li>Wybierz swój Pixel → <strong>Ustawienia</strong>. Identyfikator pixela to ciąg 15–16 cyfr.</li>
+      <li>Wklej go w pole <strong>Facebook (Meta) Pixel</strong> (domyślna kategoria <code>marketing</code>) i zapisz.</li>
+    </ol>
+    <h4>EN — How to find the Pixel ID</h4>
+    <ol>
+      <li>Go to <code>https://business.facebook.com</code> → <strong>Events Manager</strong>.</li>
+      <li>Select your Pixel → <strong>Settings</strong>. The Pixel ID is a 15–16 digit number.</li>
+      <li>Paste it into the <strong>Facebook (Meta) Pixel</strong> field (default category <code>marketing</code>) and save.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="asco-modal" id="asco-modal-hotjar">
+  <div class="asco-modal-box">
+    <button type="button" class="asco-modal-close" data-asco-close>&times;</button>
+    <h3>Hotjar</h3>
+    <h4>PL — Jak znaleźć Site ID</h4>
+    <ol>
+      <li>Wejdź na <code>https://insights.hotjar.com</code> → <strong>Settings</strong> → <strong>Sites &amp; Organizations</strong>.</li>
+      <li><strong>Site ID</strong> to liczba (np. <code>1234567</code>).</li>
+      <li>Wklej ją w pole <strong>Hotjar</strong> i zapisz.</li>
+    </ol>
+    <h4>EN — How to find the Site ID</h4>
+    <ol>
+      <li>Go to <code>https://insights.hotjar.com</code> → <strong>Settings</strong> → <strong>Sites &amp; Organizations</strong>.</li>
+      <li>The <strong>Site ID</strong> is a number (e.g. <code>1234567</code>).</li>
+      <li>Paste it into the <strong>Hotjar</strong> field and save.</li>
+    </ol>
+  </div>
+</div>
+
+{* ====================== Cookie policy template ====================== *}
+<div class="asco-modal" id="asco-modal-policy">
+  <div class="asco-modal-box asco-modal-lg">
+    <button type="button" class="asco-modal-close" data-asco-close>&times;</button>
+    <h3>{l s='Cookie policy — example template' d='Modules.Aplinesimplecookies.Admin'}</h3>
+    <p class="help-block">{l s='Copy this into a new CMS page (Design → Pages), fill in the placeholders in brackets, then paste the page URL into the field above.' d='Modules.Aplinesimplecookies.Admin'}</p>
+    <ul class="nav nav-tabs asco-tabs">
+      <li class="active"><a href="#" data-asco-tab="pl">Polski (PL)</a></li>
+      <li><a href="#" data-asco-tab="en">English (EN)</a></li>
+    </ul>
+    <div class="asco-tabpane" data-asco-tabpane="pl">
+      <button type="button" class="btn btn-default asco-copy-btn" data-asco-copy="asco-policy-pl"><i class="icon-copy"></i> {l s='Copy to clipboard' d='Modules.Aplinesimplecookies.Admin'}</button>
+      <textarea id="asco-policy-pl" class="form-control asco-policy-text" readonly rows="18">{include file="./policy-template-pl.tpl"}</textarea>
+    </div>
+    <div class="asco-tabpane" data-asco-tabpane="en" style="display:none;">
+      <button type="button" class="btn btn-default asco-copy-btn" data-asco-copy="asco-policy-en"><i class="icon-copy"></i> {l s='Copy to clipboard' d='Modules.Aplinesimplecookies.Admin'}</button>
+      <textarea id="asco-policy-en" class="form-control asco-policy-text" readonly rows="18">{include file="./policy-template-en.tpl"}</textarea>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="{$asco_module_uri|escape:'html':'UTF-8'}views/css/admin.css">
+<script src="{$asco_module_uri|escape:'html':'UTF-8'}views/js/admin.js"></script>

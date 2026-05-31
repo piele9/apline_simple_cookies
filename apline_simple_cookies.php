@@ -592,22 +592,82 @@ class apline_simple_cookies extends Module
     }
 
     /**
-     * Hook for CP05 (Custom Scripts) to validate its own fields. Returns an
-     * array of error messages. No-op until CP05 fills it in.
+     * Custom Scripts section keys (third-party trackers + raw custom HTML).
+     * The IDs are normalized (Google IDs uppercased) and trimmed.
+     *
+     * @return array
+     */
+    protected function getSubmittedScripts()
+    {
+        return [
+            'ASCO_GA4_ID' => strtoupper(trim((string) Tools::getValue('ASCO_GA4_ID'))),
+            'ASCO_GA4_CATEGORY' => (string) Tools::getValue('ASCO_GA4_CATEGORY'),
+            'ASCO_GTM_ID' => strtoupper(trim((string) Tools::getValue('ASCO_GTM_ID'))),
+            'ASCO_GTM_CATEGORY' => (string) Tools::getValue('ASCO_GTM_CATEGORY'),
+            'ASCO_FB_PIXEL_ID' => trim((string) Tools::getValue('ASCO_FB_PIXEL_ID')),
+            'ASCO_FB_PIXEL_CATEGORY' => (string) Tools::getValue('ASCO_FB_PIXEL_CATEGORY'),
+            'ASCO_HOTJAR_ID' => trim((string) Tools::getValue('ASCO_HOTJAR_ID')),
+            'ASCO_HOTJAR_CATEGORY' => (string) Tools::getValue('ASCO_HOTJAR_CATEGORY'),
+            'ASCO_CUSTOM_HEAD_ANALYTICS' => (string) Tools::getValue('ASCO_CUSTOM_HEAD_ANALYTICS'),
+            'ASCO_CUSTOM_HEAD_MARKETING' => (string) Tools::getValue('ASCO_CUSTOM_HEAD_MARKETING'),
+            'ASCO_CUSTOM_HEAD_FUNCTIONAL' => (string) Tools::getValue('ASCO_CUSTOM_HEAD_FUNCTIONAL'),
+        ];
+    }
+
+    /**
+     * Validate the Custom Scripts fields. Tracker IDs are checked against their
+     * provider format; the chosen category must be an existing active slug.
      *
      * @return string[]
      */
     protected function saveCustomScripts()
     {
-        return [];
+        $errors = [];
+        $d = 'Modules.Aplinesimplecookies.Admin';
+        $s = $this->getSubmittedScripts();
+        $cats = array_keys($this->getCategorySlugOptions());
+
+        if ($s['ASCO_GA4_ID'] !== '' && !preg_match('/^G-[A-Z0-9]+$/', $s['ASCO_GA4_ID'])) {
+            $errors[] = $this->trans('Google Analytics 4 ID must look like G-XXXXXXXXXX.', [], $d);
+        }
+        if ($s['ASCO_GTM_ID'] !== '' && !preg_match('/^GTM-[A-Z0-9]+$/', $s['ASCO_GTM_ID'])) {
+            $errors[] = $this->trans('Google Tag Manager ID must look like GTM-XXXXXXX.', [], $d);
+        }
+        if ($s['ASCO_FB_PIXEL_ID'] !== '' && !preg_match('/^\d{15,16}$/', $s['ASCO_FB_PIXEL_ID'])) {
+            $errors[] = $this->trans('Facebook Pixel ID must be 15-16 digits.', [], $d);
+        }
+        if ($s['ASCO_HOTJAR_ID'] !== '' && !preg_match('/^\d+$/', $s['ASCO_HOTJAR_ID'])) {
+            $errors[] = $this->trans('Hotjar Site ID must be numeric.', [], $d);
+        }
+
+        // A configured tracker must point at an existing active category.
+        $pairs = [
+            ['ASCO_GA4_ID', 'ASCO_GA4_CATEGORY'],
+            ['ASCO_GTM_ID', 'ASCO_GTM_CATEGORY'],
+            ['ASCO_FB_PIXEL_ID', 'ASCO_FB_PIXEL_CATEGORY'],
+            ['ASCO_HOTJAR_ID', 'ASCO_HOTJAR_CATEGORY'],
+        ];
+        foreach ($pairs as $p) {
+            if ($s[$p[0]] !== '' && !in_array($s[$p[1]], $cats, true)) {
+                $errors[] = $this->trans('Please choose a valid active category for each configured tracker.', [], $d);
+                break;
+            }
+        }
+
+        return $errors;
     }
 
     /**
-     * Hook for CP05 (Custom Scripts) to persist its own fields after the main
-     * configuration validates. No-op until CP05 fills it in.
+     * Persist the Custom Scripts fields after the main configuration validates.
+     * Custom HTML textareas are stored allowing HTML (admin-trusted, like the
+     * Edit CSS/JS module).
      */
     protected function persistCustomScripts()
     {
+        $htmlKeys = ['ASCO_CUSTOM_HEAD_ANALYTICS', 'ASCO_CUSTOM_HEAD_MARKETING', 'ASCO_CUSTOM_HEAD_FUNCTIONAL'];
+        foreach ($this->getSubmittedScripts() as $key => $value) {
+            Configuration::updateValue($key, $value, in_array($key, $htmlKeys, true));
+        }
     }
 
     /**
@@ -628,6 +688,7 @@ class apline_simple_cookies extends Module
             'asco_stats' => $this->getConsentStats(),
             'asco_submit_token' => self::SUBMIT_TOKEN,
             'asco_category_options' => $this->getCategorySlugOptions(),
+            'asco_module_uri' => __PS_BASE_URI__ . 'modules/' . $this->name . '/',
         ];
     }
 

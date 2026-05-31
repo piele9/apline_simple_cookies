@@ -1,0 +1,80 @@
+/*
+ * APLINE Simple Cookies module for PrestaShop 9 — admin configuration styles.
+ * Lightweight modal used by the "how to add this" help and the cookie-policy
+ * template. Self-contained so it does not depend on Bootstrap's modal JS.
+ * @author APLINE Arkadiusz Pielechowski
+ */
+.asco-help-link {
+  font-size: 12px;
+  font-weight: normal;
+  margin-left: 8px;
+}
+
+.asco-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.asco-modal.asco-modal-open {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.asco-modal-box {
+  background: #fff;
+  margin: 5vh auto;
+  padding: 24px;
+  width: 90%;
+  max-width: 640px;
+  max-height: 88vh;
+  overflow: auto;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.asco-modal-box.asco-modal-lg {
+  max-width: 860px;
+}
+
+.asco-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  border: 0;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+}
+
+.asco-modal-box h4 {
+  margin-top: 18px;
+  color: #2d3a4b;
+}
+
+.asco-modal-box ol {
+  margin-left: 18px;
+}
+
+.asco-modal-box code {
+  background: #f3f3f3;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.asco-policy-text {
+  width: 100%;
+  font-family: monospace;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.asco-copy-btn {
+  margin-bottom: 6px;
+}
