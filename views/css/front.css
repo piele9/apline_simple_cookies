@@ -1,0 +1,236 @@
+/*
+ * APLINE Simple Cookies module for PrestaShop 9 — front-end banner styles.
+ * Reject and Accept are kept at equal prominence (CNIL); only the highlight
+ * color differs. Bottom bar is capped so it never dominates the viewport
+ * (UODO guidance); center modal is a centered overlay.
+ * @author APLINE Arkadiusz Pielechowski
+ */
+.apline-simple-cookies.asco-banner {
+  --asco-bg: #ffffff;
+  --asco-fg: #1d2b36;
+  --asco-muted: #5b6b78;
+  --asco-border: #e0e4e8;
+  --asco-primary: #2d7a46;
+  --asco-primary-fg: #ffffff;
+  --asco-secondary-bg: #eef1f4;
+  --asco-secondary-fg: #1d2b36;
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 99990;
+  box-sizing: border-box;
+}
+
+.apline-simple-cookies.asco-banner *,
+.apline-simple-cookies.asco-banner *::before,
+.apline-simple-cookies.asco-banner *::after {
+  box-sizing: border-box;
+}
+
+.apline-simple-cookies.asco-banner.asco-style-dark {
+  --asco-bg: #1d2530;
+  --asco-fg: #f3f5f7;
+  --asco-muted: #aeb9c4;
+  --asco-border: #33404e;
+  --asco-primary: #4cae6a;
+  --asco-primary-fg: #0d1b12;
+  --asco-secondary-bg: #2b3744;
+  --asco-secondary-fg: #f3f5f7;
+}
+
+.asco-hidden {
+  display: none !important;
+}
+
+/* ---- Bottom bar ---- */
+.apline-simple-cookies.asco-pos-bottom {
+  bottom: 0;
+}
+
+.apline-simple-cookies.asco-pos-bottom .asco-overlay {
+  display: none;
+}
+
+.apline-simple-cookies.asco-pos-bottom .asco-banner-inner {
+  background: var(--asco-bg);
+  color: var(--asco-fg);
+  border-top: 1px solid var(--asco-border);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 22px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* ---- Center modal ---- */
+.apline-simple-cookies.asco-pos-center_modal {
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apline-simple-cookies.asco-pos-center_modal.asco-hidden {
+  display: none !important;
+}
+
+.apline-simple-cookies.asco-pos-center_modal .asco-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.apline-simple-cookies.asco-pos-center_modal .asco-banner-inner {
+  position: relative;
+  background: var(--asco-bg);
+  color: var(--asco-fg);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  width: 92%;
+  max-width: 560px;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 26px;
+}
+
+/* ---- Content ---- */
+.apline-simple-cookies .asco-title {
+  margin: 0 0 10px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--asco-fg);
+}
+
+.apline-simple-cookies .asco-body {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--asco-muted);
+}
+
+.apline-simple-cookies .asco-policy-link {
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+.apline-simple-cookies .asco-policy-link a {
+  color: var(--asco-primary);
+  text-decoration: underline;
+}
+
+/* ---- Actions: equal prominence ---- */
+.apline-simple-cookies .asco-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.apline-simple-cookies .asco-btn {
+  /* Identical geometry for every button — only color differs. */
+  flex: 0 1 auto;
+  min-width: 150px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  border: 1px solid var(--asco-border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--asco-secondary-bg);
+  color: var(--asco-secondary-fg);
+  transition: filter 0.15s ease;
+}
+
+.apline-simple-cookies .asco-btn:hover {
+  filter: brightness(0.96);
+}
+
+.apline-simple-cookies .asco-btn-primary {
+  background: var(--asco-primary);
+  color: var(--asco-primary-fg);
+  border-color: var(--asco-primary);
+}
+
+/* ---- Preferences ---- */
+.apline-simple-cookies .asco-prefs-cat {
+  border: 1px solid var(--asco-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.apline-simple-cookies .asco-prefs-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.apline-simple-cookies .asco-prefs-head input {
+  width: 18px;
+  height: 18px;
+}
+
+.apline-simple-cookies .asco-locked {
+  font-size: 12px;
+  color: var(--asco-muted);
+  font-weight: 400;
+}
+
+.apline-simple-cookies .asco-cat-desc {
+  margin: 6px 0 8px;
+  font-size: 13px;
+  color: var(--asco-muted);
+}
+
+.apline-simple-cookies .asco-cookie-list summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--asco-primary);
+}
+
+.apline-simple-cookies .asco-cookie-list table {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.apline-simple-cookies .asco-cookie-list th,
+.apline-simple-cookies .asco-cookie-list td {
+  border: 1px solid var(--asco-border);
+  padding: 5px 7px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.apline-simple-cookies .asco-cookie-list code {
+  font-size: 12px;
+}
+
+/* ---- Footer link (added by hookDisplayFooterAfter) ---- */
+.asco-footer-link {
+  cursor: pointer;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+  .apline-simple-cookies .asco-actions {
+    flex-direction: column;
+  }
+  .apline-simple-cookies .asco-btn {
+    width: 100%;
+    min-width: 0;
+  }
+  .apline-simple-cookies.asco-pos-bottom .asco-banner-inner {
+    padding: 14px 16px;
+    max-height: 88vh;
+  }
+}

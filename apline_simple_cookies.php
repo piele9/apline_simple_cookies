@@ -15,6 +15,9 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/classes/AplineSimpleCookiesCategory.php';
+require_once __DIR__ . '/classes/AplineSimpleCookiesEntry.php';
+
 class apline_simple_cookies extends Module
 {
     const TABLE_CATEGORY = 'asco_category';
@@ -829,5 +832,196 @@ class apline_simple_cookies extends Module
             <p>' . $this->trans('Need custom PrestaShop development, performance optimization or integrations?', [], 'Modules.Aplinesimplecookies.Admin') . '</p>
             <a class="btn btn-default" href="https://apline.pl" target="_blank" rel="noopener noreferrer">&#8594; APLINE.PL</a>
         </div>';
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* Front-end render                                                      */
+    /* --------------------------------------------------------------------- */
+
+    public function hookActionFrontControllerSetMedia()
+    {
+        try {
+            $this->context->controller->registerStylesheet(
+                'apline-simple-cookies',
+                'modules/' . $this->name . '/views/css/front.css'
+            );
+            $this->context->controller->registerJavascript(
+                'apline-simple-cookies',
+                'modules/' . $this->name . '/views/js/banner.js',
+                ['position' => 'bottom', 'priority' => 30]
+            );
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog('apline_simple_cookies setMedia: ' . $e->getMessage(), 3);
+        }
+    }
+
+    /**
+     * Inline window.ASCO bootstrap in <head>: everything banner.js needs to
+     * decide whether to show the banner and which trackers to load.
+     */
+    public function hookDisplayHeader($params)
+    {
+        try {
+            return $this->renderInitScript();
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog('apline_simple_cookies header: ' . $e->getMessage(), 3);
+
+            return '';
+        }
+    }
+
+    /**
+     * @return string the inline bootstrap <script>
+     */
+    private function renderInitScript()
+    {
+        $lang = $this->resolveLang();
+        $existing = $this->readConsentCookie();
+
+        $gpcAutoReject = false;
+        if ((int) Configuration::get('ASCO_RESPECT_GPC')
+            && isset($_SERVER['HTTP_SEC_GPC']) && (string) $_SERVER['HTTP_SEC_GPC'] === '1'
+        ) {
+            $gpcAutoReject = true;
+        }
+
+        $data = [
+            'lang' => $lang,
+            'categories' => AplineSimpleCookiesCategory::getActiveCategories($lang),
+            'existing_consent' => $existing,
+            'reprompt_days' => (int) Configuration::get('ASCO_REPROMPT_DAYS'),
+            'policy_version' => (string) Configuration::get('ASCO_POLICY_VERSION'),
+            'policy_url' => (string) Configuration::get('ASCO_POLICY_URL'),
+            'banner_position' => (string) Configuration::get('ASCO_BANNER_POSITION'),
+            'banner_style' => (string) Configuration::get('ASCO_BANNER_STYLE'),
+            'primary_button' => (string) Configuration::get('ASCO_PRIMARY_BUTTON'),
+            'copy' => $this->getCopyForLang($lang),
+            'scripts' => $this->getScriptsConfig(),
+            'gpc_auto_rejected' => $gpcAutoReject,
+            'callback_url' => $this->context->link->getModuleLink($this->name, 'consent', [], true),
+        ];
+
+        $json = json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+
+        return '<script>window.ASCO = ' . $json . ';</script>';
+    }
+
+    /**
+     * Render the banner + preferences modal at the end of the body.
+     */
+    public function hookDisplayBeforeBodyClosingTag($params)
+    {
+        try {
+            $lang = $this->resolveLang();
+            $this->context->smarty->assign([
+                'asco_categories' => AplineSimpleCookiesCategory::getActiveCategories($lang),
+                'asco_copy' => $this->getCopyForLang($lang),
+                'asco_lang' => $lang,
+                'asco_position' => (string) Configuration::get('ASCO_BANNER_POSITION'),
+                'asco_style' => (string) Configuration::get('ASCO_BANNER_STYLE'),
+                'asco_primary' => (string) Configuration::get('ASCO_PRIMARY_BUTTON'),
+            ]);
+
+            return $this->display(__FILE__, 'views/templates/hook/banner.tpl');
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog('apline_simple_cookies banner: ' . $e->getMessage(), 3);
+
+            return '';
+        }
+    }
+
+    /**
+     * "Cookie settings" link in the footer; reopens the banner.
+     */
+    public function hookDisplayFooterAfter($params)
+    {
+        try {
+            $copy = $this->getCopyForLang($this->resolveLang());
+
+            return '<a href="#" class="asco-footer-link" onclick="if(window.ASCO_openBanner){window.ASCO_openBanner();}return false;">'
+                . htmlspecialchars($copy['footer_link'], ENT_QUOTES, 'UTF-8')
+                . '</a>';
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
+    /**
+     * Resolve the banner language from the PrestaShop context, falling back to
+     * ASCO_DEFAULT_LANG when the shop language is neither PL nor EN.
+     *
+     * @return string 'pl' or 'en'
+     */
+    public function resolveLang()
+    {
+        $iso = '';
+        if (isset($this->context->language) && Validate::isLoadedObject($this->context->language)) {
+            $iso = strtolower((string) $this->context->language->iso_code);
+        }
+        if ($iso === 'pl' || $iso === 'en') {
+            return $iso;
+        }
+
+        return Configuration::get('ASCO_DEFAULT_LANG') === 'en' ? 'en' : 'pl';
+    }
+
+    /**
+     * Banner copy for one language, resolved from the ASCO_COPY_* keys.
+     *
+     * @param string $lang 'pl' or 'en'
+     *
+     * @return array
+     */
+    public function getCopyForLang($lang)
+    {
+        $u = ($lang === 'en') ? 'EN' : 'PL';
+
+        return [
+            'title' => (string) Configuration::get('ASCO_COPY_TITLE_' . $u),
+            'body' => (string) Configuration::get('ASCO_COPY_BODY_' . $u),
+            'btn_accept' => (string) Configuration::get('ASCO_COPY_BTN_ACCEPT_' . $u),
+            'btn_reject' => (string) Configuration::get('ASCO_COPY_BTN_REJECT_' . $u),
+            'btn_prefs' => (string) Configuration::get('ASCO_COPY_BTN_PREFS_' . $u),
+            'btn_save' => (string) Configuration::get('ASCO_COPY_BTN_SAVE_' . $u),
+            'footer_link' => (string) Configuration::get('ASCO_COPY_FOOTER_LINK_' . $u),
+            'policy_url' => (string) Configuration::get('ASCO_POLICY_URL'),
+        ];
+    }
+
+    /**
+     * The current visitor's consent cookie, decoded, or null if absent/invalid.
+     *
+     * @return array|null
+     */
+    public function readConsentCookie()
+    {
+        if (empty($_COOKIE['asco_consent'])) {
+            return null;
+        }
+        $decoded = json_decode((string) $_COOKIE['asco_consent'], true);
+
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    /**
+     * Third-party tracker configuration exposed to banner.js (IDs + the consent
+     * category that unlocks each, plus the raw custom HTML snippets). The actual
+     * gated injection lives in banner.js (see CP08).
+     *
+     * @return array
+     */
+    public function getScriptsConfig()
+    {
+        return [
+            'ga4' => ['id' => (string) Configuration::get('ASCO_GA4_ID'), 'category' => (string) Configuration::get('ASCO_GA4_CATEGORY')],
+            'gtm' => ['id' => (string) Configuration::get('ASCO_GTM_ID'), 'category' => (string) Configuration::get('ASCO_GTM_CATEGORY')],
+            'fb' => ['id' => (string) Configuration::get('ASCO_FB_PIXEL_ID'), 'category' => (string) Configuration::get('ASCO_FB_PIXEL_CATEGORY')],
+            'hotjar' => ['id' => (string) Configuration::get('ASCO_HOTJAR_ID'), 'category' => (string) Configuration::get('ASCO_HOTJAR_CATEGORY')],
+            'custom' => [
+                'analytics' => (string) Configuration::get('ASCO_CUSTOM_HEAD_ANALYTICS'),
+                'marketing' => (string) Configuration::get('ASCO_CUSTOM_HEAD_MARKETING'),
+                'functional' => (string) Configuration::get('ASCO_CUSTOM_HEAD_FUNCTIONAL'),
+            ],
+        ];
     }
 }
