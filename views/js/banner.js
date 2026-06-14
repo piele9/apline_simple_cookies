@@ -12,6 +12,10 @@
 (function () {
   'use strict';
 
+  // The banner HTML is injected via displayBeforeBodyClosingTag, which the
+  // theme renders AFTER the bottom JavaScript bundle. Defer init until the DOM
+  // is ready so #asco-banner exists when we look for it.
+  function init() {
   var CFG = window.ASCO || {};
   var banner = document.getElementById('asco-banner');
   if (!banner || !CFG.callback_url) {
@@ -332,4 +336,11 @@
     }
     showBanner('main');
   };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
