@@ -37,6 +37,22 @@
     return null;
   }
 
+  // Persist the consent decision client-side. This is the source of truth the
+  // banner relies on, so it does not depend on the server response's Set-Cookie
+  // header being honored (proxies / output buffering can drop it). PHP reads the
+  // same cookie on the next request to populate window.ASCO.existing_consent.
+  function writeConsentCookie(decision) {
+    var payload = {
+      v: CFG.policy_version,
+      d: decision,
+      t: Math.floor(Date.now() / 1000)
+    };
+    var maxAge = (CFG.reprompt_days || 365) * 86400;
+    var secure = (location.protocol === 'https:') ? '; Secure' : '';
+    document.cookie = 'asco_consent=' + encodeURIComponent(JSON.stringify(payload)) +
+      '; path=/; max-age=' + maxAge + '; SameSite=Lax' + secure;
+  }
+
   // Returns the parsed consent object if it is still valid, otherwise false.
   function validConsent() {
     var raw = readCookie('asco_consent');
@@ -131,10 +147,11 @@
   }
 
   function applyAndClose(decision, source) {
+    // Persist client-side first so the banner never reappears, even if the
+    // server round-trip fails or its Set-Cookie is dropped by a proxy.
+    writeConsentCookie(decision);
     post(decision, source, function (json) {
-      if (json && json.ok) {
-        ascoLoadScripts(json.scripts_to_load || []);
-      }
+      ascoLoadScripts((json && json.ok && json.scripts_to_load) ? json.scripts_to_load : scriptsForDecision(decision));
     });
     hideBanner();
   }
@@ -262,6 +279,7 @@
   if (CFG.gpc_auto_rejected && !consent) {
     // Browser asked us not to track: record a reject silently, no banner.
     var rejected = buildDecision(false);
+    writeConsentCookie(rejected);
     post(rejected, 'gpc', function (json) {
       if (json && json.ok) {
         ascoLoadScripts(json.scripts_to_load || []);
