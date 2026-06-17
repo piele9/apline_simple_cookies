@@ -3,6 +3,10 @@
 Thumbs.db
 *.swp
 *~
+CLAUDE.md
+HANDOFF.md
+PLAN.md
+checkpoints/
 
 # Local build artifacts
 *.zip
