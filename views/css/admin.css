@@ -3,7 +3,7 @@
  * Lightweight modal used by the "how to add this" help and the cookie-policy
  * template. Self-contained so it does not depend on Bootstrap's modal JS.
  * Loaded from getContent() via addCSS().
- * @author APLINE Arkadiusz Pielechowski
+ * @author Arkadiusz Pielechowski
  */
 
 /* Large primary actions (APLINE module standard). */

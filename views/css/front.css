@@ -9,7 +9,7 @@
  * .asco-style-dark). The values below are only a neutral fallback with zero
  * specificity (:where), so the configured colours — and any theme override
  * with a more specific selector — always win, regardless of stylesheet order.
- * @author APLINE Arkadiusz Pielechowski
+ * @author Arkadiusz Pielechowski
  */
 :where(.apline-simple-cookies.asco-banner) {
   --asco-bg: #ffffff;

@@ -11,7 +11,7 @@
  * visitor's real decision (fresh save, return visit, or GPC auto-reject)
  * via gtag('consent','update', …).
  *
- * @author APLINE Arkadiusz Pielechowski
+ * @author Arkadiusz Pielechowski
  */
 (function () {
   'use strict';

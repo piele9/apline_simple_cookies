@@ -2,7 +2,7 @@
  * APLINE Simple Cookies module for PrestaShop 9 — admin configuration helpers.
  * Help modals ("how to add this"), the cookie-policy template modal with
  * PL/EN tabs, and copy-to-clipboard. Vanilla JS, no jQuery dependency.
- * @author APLINE Arkadiusz Pielechowski
+ * @author Arkadiusz Pielechowski
  */
 (function () {
   'use strict';

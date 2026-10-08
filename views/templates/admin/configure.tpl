@@ -1,6 +1,6 @@
 {*
  * APLINE Simple Cookies module for PrestaShop 9.
- * @author APLINE Arkadiusz Pielechowski
+ * @author Arkadiusz Pielechowski
  *}
 <div class="panel">
   <h3><i class="icon-check-square-o"></i> {l s='Pierwsze kroki' d='Modules.Aplinesimplecookies.Admin'}</h3>

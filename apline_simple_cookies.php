@@ -7,9 +7,9 @@
  * tracker gating (Google Analytics 4, Google Tag Manager, Facebook Pixel,
  * Hotjar), and a consent audit log for accountability.
  *
- * @author    APLINE Arkadiusz Pielechowski
- * @copyright APLINE Arkadiusz Pielechowski
- * @license   Custom Attribution License v1.0 - see LICENSE.md
+ * @author    Arkadiusz Pielechowski
+ * @copyright Arkadiusz Pielechowski
+ * @license   MIT - see LICENSE.md
  */
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -91,8 +91,8 @@ class apline_simple_cookies extends Module
     {
         $this->name = 'apline_simple_cookies';
         $this->tab = 'administration';
-        $this->version = '1.2.0';
-        $this->author = 'APLINE Arkadiusz Pielechowski';
+        $this->version = '1.2.1';
+        $this->author = 'Arkadiusz Pielechowski';
         $this->need_instance = false;
         $this->bootstrap = true;
 
@@ -1025,10 +1025,9 @@ class apline_simple_cookies extends Module
     }
 
     /**
-     * APLINE attribution block. Required by the module license to stay visible
-     * on the configuration page with a working link to https://apline.pl.
-     * Rendered server-side as a standalone component (not CSS-only) so it
-     * cannot be trivially stripped.
+     * Author credit with a link to https://pielechowski.pl, shown on the
+     * configuration page. The module is MIT-licensed: the credit is kept by
+     * default, it is not a license requirement.
      *
      * @return string
      */
@@ -1041,7 +1040,7 @@ class apline_simple_cookies extends Module
         </style>
         <div class="apline-credit">
             ' . $this->trans('Moduł stworzony przez', [], 'Modules.Aplinesimplecookies.Admin') . '
-            <a href="https://apline.pl" target="_blank" rel="noopener noreferrer">APLINE</a>
+            <a href="https://pielechowski.pl" target="_blank" rel="noopener noreferrer">PIELECHOWSKI.PL</a>
         </div>';
     }
 
@@ -1056,7 +1055,7 @@ class apline_simple_cookies extends Module
         <div class="panel">
             <h3>&#9749; ' . $this->trans('Podoba Ci się ten moduł?', [], 'Modules.Aplinesimplecookies.Admin') . '</h3>
             <p>' . $this->trans('Potrzebujesz modułu na zamówienie, przyspieszenia sklepu PrestaShop albo integracji?', [], 'Modules.Aplinesimplecookies.Admin') . '</p>
-            <a class="btn btn-default" href="https://apline.pl" target="_blank" rel="noopener noreferrer">&#8594; APLINE.PL</a>
+            <a class="btn btn-default" href="https://pielechowski.pl" target="_blank" rel="noopener noreferrer">&#8594; PIELECHOWSKI.PL</a>
         </div>';
     }
 

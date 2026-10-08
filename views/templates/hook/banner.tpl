@@ -2,7 +2,7 @@
  * APLINE Simple Cookies module for PrestaShop 9 — consent banner.
  * Reject / Preferences / Accept are kept at equal prominence (CNIL).
  * Hidden by default; banner.js reveals it when consent is needed.
- * @author APLINE Arkadiusz Pielechowski
+ * @author Arkadiusz Pielechowski
  *}
 <div id="asco-banner"
      class="apline-simple-cookies asco-banner asco-pos-{$asco_position|escape:'html':'UTF-8'} asco-style-{$asco_style|escape:'html':'UTF-8'} asco-hidden"
