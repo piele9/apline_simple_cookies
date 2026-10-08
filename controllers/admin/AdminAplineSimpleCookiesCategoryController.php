@@ -41,16 +41,16 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
                 'class' => 'fixed-width-xs',
             ],
             'slug' => [
-                'title' => $this->trans('Slug', [], self::DOMAIN),
+                'title' => $this->trans('Identyfikator (slug)', [], self::DOMAIN),
             ],
             'name_pl' => [
-                'title' => $this->trans('Name (PL)', [], self::DOMAIN),
+                'title' => $this->trans('Nazwa (PL)', [], self::DOMAIN),
             ],
             'name_en' => [
-                'title' => $this->trans('Name (EN)', [], self::DOMAIN),
+                'title' => $this->trans('Nazwa (EN)', [], self::DOMAIN),
             ],
             'is_necessary' => [
-                'title' => $this->trans('Necessary', [], self::DOMAIN),
+                'title' => $this->trans('Niezbędna', [], self::DOMAIN),
                 'align' => 'center',
                 'type' => 'bool',
                 'callback' => 'printNecessary',
@@ -58,14 +58,14 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
                 'search' => false,
             ],
             'active' => [
-                'title' => $this->trans('Active', [], self::DOMAIN),
+                'title' => $this->trans('Aktywna', [], self::DOMAIN),
                 'align' => 'center',
                 'active' => 'active',
                 'type' => 'bool',
                 'orderby' => false,
             ],
             'position' => [
-                'title' => $this->trans('Position', [], self::DOMAIN),
+                'title' => $this->trans('Pozycja', [], self::DOMAIN),
                 'align' => 'center',
                 'position' => 'position',
                 'search' => false,
@@ -79,8 +79,8 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
         $this->addRowAction('delete');
         $this->bulk_actions = [
             'delete' => [
-                'text' => $this->trans('Delete selected', [], 'Admin.Actions'),
-                'confirm' => $this->trans('Delete selected items? Their cookie entries will also be removed.', [], self::DOMAIN),
+                'text' => $this->trans('Usuń zaznaczone', [], 'Admin.Actions'),
+                'confirm' => $this->trans('Usunąć zaznaczone kategorie? Cookies przypisane do nich też zostaną usunięte.', [], self::DOMAIN),
             ],
         ];
     }
@@ -108,7 +108,7 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
 
         $this->page_header_toolbar_btn['back_to_config'] = [
             'href' => $this->getConfigUrl(),
-            'desc' => $this->trans('Back to configuration', [], self::DOMAIN),
+            'desc' => $this->trans('Wróć do konfiguracji', [], self::DOMAIN),
             'icon' => 'process-icon-back',
         ];
     }
@@ -121,7 +121,7 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
     public function printNecessary($value, $row)
     {
         return $value
-            ? '<span class="label label-info">' . $this->trans('Always on', [], self::DOMAIN) . '</span>'
+            ? '<span class="label label-info">' . $this->trans('Zawsze włączona', [], self::DOMAIN) . '</span>'
             : '<span class="text-muted">&mdash;</span>';
     }
 
@@ -132,7 +132,7 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
         $back = '<div style="margin:10px 0;"><a class="btn btn-default" href="'
             . htmlspecialchars($this->getConfigUrl(), ENT_QUOTES)
             . '"><i class="icon-chevron-left"></i> '
-            . $this->trans('Back to configuration', [], self::DOMAIN)
+            . $this->trans('Wróć do konfiguracji', [], self::DOMAIN)
             . '</a></div>';
 
         $credit = method_exists($this->module, 'renderAplineFooter')
@@ -146,66 +146,66 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
     {
         $this->fields_form = [
             'legend' => [
-                'title' => $this->trans('Cookie category', [], self::DOMAIN),
+                'title' => $this->trans('Kategoria cookies', [], self::DOMAIN),
                 'icon' => 'icon-folder',
             ],
             'input' => [
                 [
                     'type' => 'text',
-                    'label' => $this->trans('Slug', [], self::DOMAIN),
+                    'label' => $this->trans('Identyfikator (slug)', [], self::DOMAIN),
                     'name' => 'slug',
                     'required' => true,
-                    'desc' => $this->trans('Lowercase identifier (a-z, 0-9, _). Used by the front-end and the Custom Scripts mapping. Must be unique. E.g. analytics, marketing.', [], self::DOMAIN),
+                    'desc' => $this->trans('Małe litery, cyfry i podkreślenia (a–z, 0–9, _), na początku litera; musi być unikalny. Używają go baner i przypisanie skryptów do kategorii, np. analytics, marketing.', [], self::DOMAIN),
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->trans('Name (PL)', [], self::DOMAIN),
+                    'label' => $this->trans('Nazwa (PL)', [], self::DOMAIN),
                     'name' => 'name_pl',
                     'required' => true,
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->trans('Name (EN)', [], self::DOMAIN),
+                    'label' => $this->trans('Nazwa (EN)', [], self::DOMAIN),
                     'name' => 'name_en',
                     'required' => true,
                 ],
                 [
                     'type' => 'textarea',
-                    'label' => $this->trans('Description (PL)', [], self::DOMAIN),
+                    'label' => $this->trans('Opis (PL)', [], self::DOMAIN),
                     'name' => 'description_pl',
                     'required' => true,
                     'rows' => 3,
                 ],
                 [
                     'type' => 'textarea',
-                    'label' => $this->trans('Description (EN)', [], self::DOMAIN),
+                    'label' => $this->trans('Opis (EN)', [], self::DOMAIN),
                     'name' => 'description_en',
                     'required' => true,
                     'rows' => 3,
                 ],
                 [
                     'type' => 'switch',
-                    'label' => $this->trans('Necessary category', [], self::DOMAIN),
+                    'label' => $this->trans('Kategoria niezbędna', [], self::DOMAIN),
                     'name' => 'is_necessary',
                     'is_bool' => true,
-                    'desc' => $this->trans('Only one category can be necessary. Always-on, no toggle in user preferences.', [], self::DOMAIN),
+                    'desc' => $this->trans('Tylko jedna kategoria może być niezbędna. Jest zawsze włączona i nie ma przełącznika w preferencjach klienta.', [], self::DOMAIN),
                     'values' => [
-                        ['id' => 'is_necessary_on', 'value' => 1, 'label' => $this->trans('Yes', [], 'Admin.Global')],
-                        ['id' => 'is_necessary_off', 'value' => 0, 'label' => $this->trans('No', [], 'Admin.Global')],
+                        ['id' => 'is_necessary_on', 'value' => 1, 'label' => $this->trans('Tak', [], 'Admin.Global')],
+                        ['id' => 'is_necessary_off', 'value' => 0, 'label' => $this->trans('Nie', [], 'Admin.Global')],
                     ],
                 ],
                 [
                     'type' => 'switch',
-                    'label' => $this->trans('Active', [], self::DOMAIN),
+                    'label' => $this->trans('Aktywna', [], self::DOMAIN),
                     'name' => 'active',
                     'is_bool' => true,
                     'values' => [
-                        ['id' => 'active_on', 'value' => 1, 'label' => $this->trans('Yes', [], 'Admin.Global')],
-                        ['id' => 'active_off', 'value' => 0, 'label' => $this->trans('No', [], 'Admin.Global')],
+                        ['id' => 'active_on', 'value' => 1, 'label' => $this->trans('Tak', [], 'Admin.Global')],
+                        ['id' => 'active_off', 'value' => 0, 'label' => $this->trans('Nie', [], 'Admin.Global')],
                     ],
                 ],
             ],
-            'submit' => ['title' => $this->trans('Save', [], 'Admin.Actions')],
+            'submit' => ['title' => $this->trans('Zapisz', [], 'Admin.Actions')],
         ];
 
         return parent::renderForm();
@@ -221,7 +221,7 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
             if ($isUpdate) {
                 $existing = new AplineSimpleCookiesCategory((int) Tools::getValue($this->identifier));
                 if (!Validate::isLoadedObject($existing)) {
-                    $this->errors[] = $this->trans('The category you are trying to edit does not exist.', [], self::DOMAIN);
+                    $this->errors[] = $this->trans('Edytowana kategoria nie istnieje.', [], self::DOMAIN);
 
                     return false;
                 }
@@ -257,37 +257,37 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
 
         // Required text fields.
         if ($namePl === '') {
-            $this->errors[] = $this->trans('The field "Name (PL)" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Nazwa (PL)” jest wymagane.', [], self::DOMAIN);
         }
         if ($nameEn === '') {
-            $this->errors[] = $this->trans('The field "Name (EN)" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Nazwa (EN)” jest wymagane.', [], self::DOMAIN);
         }
         if ($descPl === '') {
-            $this->errors[] = $this->trans('The field "Description (PL)" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Opis (PL)” jest wymagane.', [], self::DOMAIN);
         }
         if ($descEn === '') {
-            $this->errors[] = $this->trans('The field "Description (EN)" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Opis (EN)” jest wymagane.', [], self::DOMAIN);
         }
 
         // Length caps (reject).
         if (mb_strlen($namePl) > self::MAX_STRING || mb_strlen($nameEn) > self::MAX_STRING) {
-            $this->errors[] = $this->trans('Category names must not exceed 255 characters.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Nazwa kategorii może mieć najwyżej 255 znaków.', [], self::DOMAIN);
         }
 
         // Slug: lowercase, starts with a letter, unique.
         if ($slug === '') {
-            $this->errors[] = $this->trans('The field "Slug" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Identyfikator (slug)” jest wymagane.', [], self::DOMAIN);
         } elseif (mb_strlen($slug) > self::MAX_SLUG) {
-            $this->errors[] = $this->trans('The slug must not exceed 64 characters.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Identyfikator może mieć najwyżej 64 znaki.', [], self::DOMAIN);
         } elseif (!preg_match('/^[a-z][a-z0-9_]*$/', $slug)) {
-            $this->errors[] = $this->trans('The slug may only contain lowercase letters, digits and underscores, and must start with a letter.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Identyfikator może zawierać tylko małe litery, cyfry i podkreślenia i musi zaczynać się literą.', [], self::DOMAIN);
         } elseif (AplineSimpleCookiesCategory::slugExists($slug, $currentId)) {
-            $this->errors[] = $this->trans('This slug is already used by another category.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Ten identyfikator ma już inna kategoria.', [], self::DOMAIN);
         }
 
         // Necessary singleton: at most one category may be necessary.
         if ($isNecessary && AplineSimpleCookiesCategory::countNecessary($currentId) > 0) {
-            $this->errors[] = $this->trans('Only one necessary category is allowed. Disable the existing one first.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Może być tylko jedna kategoria niezbędna. Najpierw zdejmij to oznaczenie z obecnej.', [], self::DOMAIN);
         }
 
         // Must never end up with zero necessary categories: block unchecking
@@ -295,7 +295,7 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
         if (!$isNecessary && $existing && (int) $existing->is_necessary === 1
             && AplineSimpleCookiesCategory::countNecessary($currentId) === 0
         ) {
-            $this->errors[] = $this->trans('You cannot remove the necessary flag from the only necessary category. Mark another category as necessary first.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Nie można zdjąć oznaczenia „niezbędna” z jedynej niezbędnej kategorii. Najpierw oznacz jako niezbędną inną kategorię.', [], self::DOMAIN);
         }
 
         if (!empty($this->errors)) {
@@ -318,7 +318,7 @@ class AdminAplineSimpleCookiesCategoryController extends ModuleAdminController
         $obj = $this->loadObject(true);
         if (Validate::isLoadedObject($obj)) {
             if ((int) $obj->is_necessary === 1 && AplineSimpleCookiesCategory::countNecessary((int) $obj->id) === 0) {
-                $this->errors[] = $this->trans('You cannot delete the only necessary category.', [], self::DOMAIN);
+                $this->errors[] = $this->trans('Nie można usunąć jedynej kategorii niezbędnej.', [], self::DOMAIN);
 
                 return false;
             }

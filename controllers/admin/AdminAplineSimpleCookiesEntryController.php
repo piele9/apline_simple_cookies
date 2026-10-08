@@ -34,8 +34,8 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
 
         parent::__construct();
 
-        // Show the (English) category name on the list via a join.
-        $this->_select = 'c.`name_en` AS category_name';
+        // Show the (Polish) category name on the list via a join.
+        $this->_select = 'c.`name_pl` AS category_name';
         $this->_join = 'LEFT JOIN `' . _DB_PREFIX_ . 'asco_category` c ON c.`id_asco_category` = a.`id_asco_category`';
 
         $this->fields_list = [
@@ -45,22 +45,22 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
                 'class' => 'fixed-width-xs',
             ],
             'cookie_name' => [
-                'title' => $this->trans('Cookie name', [], self::DOMAIN),
+                'title' => $this->trans('Nazwa cookie', [], self::DOMAIN),
             ],
             'provider' => [
-                'title' => $this->trans('Provider', [], self::DOMAIN),
+                'title' => $this->trans('Dostawca', [], self::DOMAIN),
             ],
             'category_name' => [
-                'title' => $this->trans('Category', [], self::DOMAIN),
+                'title' => $this->trans('Kategoria', [], self::DOMAIN),
                 'search' => false,
                 'orderby' => false,
             ],
             'expiration' => [
-                'title' => $this->trans('Expiration', [], self::DOMAIN),
+                'title' => $this->trans('Ważność', [], self::DOMAIN),
                 'search' => false,
             ],
             'position' => [
-                'title' => $this->trans('Position', [], self::DOMAIN),
+                'title' => $this->trans('Pozycja', [], self::DOMAIN),
                 'align' => 'center',
                 'position' => 'position',
                 'search' => false,
@@ -74,8 +74,8 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
         $this->addRowAction('delete');
         $this->bulk_actions = [
             'delete' => [
-                'text' => $this->trans('Delete selected', [], 'Admin.Actions'),
-                'confirm' => $this->trans('Delete selected items?', [], 'Admin.Notifications.Warning'),
+                'text' => $this->trans('Usuń zaznaczone', [], 'Admin.Actions'),
+                'confirm' => $this->trans('Usunąć zaznaczone cookies?', [], 'Admin.Notifications.Warning'),
             ],
         ];
     }
@@ -103,7 +103,7 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
 
         $this->page_header_toolbar_btn['back_to_config'] = [
             'href' => $this->getConfigUrl(),
-            'desc' => $this->trans('Back to configuration', [], self::DOMAIN),
+            'desc' => $this->trans('Wróć do konfiguracji', [], self::DOMAIN),
             'icon' => 'process-icon-back',
         ];
     }
@@ -115,7 +115,7 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
         $back = '<div style="margin:10px 0;"><a class="btn btn-default" href="'
             . htmlspecialchars($this->getConfigUrl(), ENT_QUOTES)
             . '"><i class="icon-chevron-left"></i> '
-            . $this->trans('Back to configuration', [], self::DOMAIN)
+            . $this->trans('Wróć do konfiguracji', [], self::DOMAIN)
             . '</a></div>';
 
         $credit = method_exists($this->module, 'renderAplineFooter')
@@ -133,14 +133,14 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
         $options = [];
         try {
             $rows = Db::getInstance()->executeS(
-                'SELECT `id_asco_category`, `name_en` FROM `' . _DB_PREFIX_ . 'asco_category`
+                'SELECT `id_asco_category`, `name_pl` FROM `' . _DB_PREFIX_ . 'asco_category`
                  ORDER BY `position` ASC'
             );
             if (is_array($rows)) {
                 foreach ($rows as $row) {
                     $options[] = [
                         'id_asco_category' => (int) $row['id_asco_category'],
-                        'name' => $row['name_en'] . ' (' . $row['id_asco_category'] . ')',
+                        'name' => $row['name_pl'] . ' (' . $row['id_asco_category'] . ')',
                     ];
                 }
             }
@@ -155,13 +155,13 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
     {
         $this->fields_form = [
             'legend' => [
-                'title' => $this->trans('Cookie', [], self::DOMAIN),
+                'title' => $this->trans('Plik cookie', [], self::DOMAIN),
                 'icon' => 'icon-cube',
             ],
             'input' => [
                 [
                     'type' => 'select',
-                    'label' => $this->trans('Category', [], self::DOMAIN),
+                    'label' => $this->trans('Kategoria', [], self::DOMAIN),
                     'name' => 'id_asco_category',
                     'required' => true,
                     'options' => [
@@ -172,47 +172,47 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->trans('Cookie name', [], self::DOMAIN),
+                    'label' => $this->trans('Nazwa cookie', [], self::DOMAIN),
                     'name' => 'cookie_name',
                     'required' => true,
-                    'desc' => $this->trans('E.g. _ga, _fbp, PHPSESSID.', [], self::DOMAIN),
+                    'desc' => $this->trans('Np. _ga, _fbp, PHPSESSID.', [], self::DOMAIN),
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->trans('Provider', [], self::DOMAIN),
+                    'label' => $this->trans('Dostawca', [], self::DOMAIN),
                     'name' => 'provider',
                     'required' => true,
-                    'desc' => $this->trans('Who reads the cookie. E.g. Google LLC, Meta Platforms, Your company.', [], self::DOMAIN),
+                    'desc' => $this->trans('Kto odczytuje cookie, np. Google LLC, Meta Platforms albo nazwa Twojej firmy.', [], self::DOMAIN),
                 ],
                 [
                     'type' => 'textarea',
-                    'label' => $this->trans('Purpose (PL)', [], self::DOMAIN),
+                    'label' => $this->trans('Cel (PL)', [], self::DOMAIN),
                     'name' => 'purpose_pl',
                     'required' => true,
                     'rows' => 2,
                 ],
                 [
                     'type' => 'textarea',
-                    'label' => $this->trans('Purpose (EN)', [], self::DOMAIN),
+                    'label' => $this->trans('Cel (EN)', [], self::DOMAIN),
                     'name' => 'purpose_en',
                     'required' => true,
                     'rows' => 2,
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->trans('Expiration', [], self::DOMAIN),
+                    'label' => $this->trans('Ważność', [], self::DOMAIN),
                     'name' => 'expiration',
                     'required' => true,
-                    'desc' => $this->trans('Free text. E.g. 2 lata / 2 years, 30 dni / 30 days, Sesja / Session.', [], self::DOMAIN),
+                    'desc' => $this->trans('Dowolny tekst, np. 2 lata / 2 years, 30 dni / 30 days, Sesja / Session.', [], self::DOMAIN),
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->trans('Domain', [], self::DOMAIN),
+                    'label' => $this->trans('Domena', [], self::DOMAIN),
                     'name' => 'domain',
-                    'desc' => $this->trans('Optional. The domain that sets the cookie. E.g. .google-analytics.com.', [], self::DOMAIN),
+                    'desc' => $this->trans('Opcjonalnie. Domena, która ustawia cookie, np. .google-analytics.com.', [], self::DOMAIN),
                 ],
             ],
-            'submit' => ['title' => $this->trans('Save', [], 'Admin.Actions')],
+            'submit' => ['title' => $this->trans('Zapisz', [], 'Admin.Actions')],
         ];
 
         return parent::renderForm();
@@ -227,7 +227,7 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
             if ($isUpdate) {
                 $existing = new AplineSimpleCookiesEntry((int) Tools::getValue($this->identifier));
                 if (!Validate::isLoadedObject($existing)) {
-                    $this->errors[] = $this->trans('The cookie you are trying to edit does not exist.', [], self::DOMAIN);
+                    $this->errors[] = $this->trans('Edytowany plik cookie nie istnieje.', [], self::DOMAIN);
 
                     return false;
                 }
@@ -259,34 +259,34 @@ class AdminAplineSimpleCookiesEntryController extends ModuleAdminController
         $domain = trim((string) Tools::getValue('domain'));
 
         if ($cookieName === '') {
-            $this->errors[] = $this->trans('The field "Cookie name" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Nazwa cookie” jest wymagane.', [], self::DOMAIN);
         }
         if ($provider === '') {
-            $this->errors[] = $this->trans('The field "Provider" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Dostawca” jest wymagane.', [], self::DOMAIN);
         }
         if ($purposePl === '') {
-            $this->errors[] = $this->trans('The field "Purpose (PL)" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Cel (PL)” jest wymagane.', [], self::DOMAIN);
         }
         if ($purposeEn === '') {
-            $this->errors[] = $this->trans('The field "Purpose (EN)" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Cel (EN)” jest wymagane.', [], self::DOMAIN);
         }
         if ($expiration === '') {
-            $this->errors[] = $this->trans('The field "Expiration" is required.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Ważność” jest wymagane.', [], self::DOMAIN);
         }
 
-        foreach (['Cookie name' => $cookieName, 'Provider' => $provider, 'Domain' => $domain] as $label => $value) {
+        foreach (['Nazwa cookie' => $cookieName, 'Dostawca' => $provider, 'Domena' => $domain] as $label => $value) {
             if (mb_strlen($value) > self::MAX_STRING) {
-                $this->errors[] = $this->trans('The field "%s" exceeds the maximum length of 255 characters.', [$label], self::DOMAIN);
+                $this->errors[] = $this->trans('Pole „%s” może mieć najwyżej 255 znaków.', [$label], self::DOMAIN);
             }
         }
         if (mb_strlen($expiration) > self::MAX_EXPIRATION) {
-            $this->errors[] = $this->trans('The field "Expiration" exceeds the maximum length of 64 characters.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Pole „Ważność” może mieć najwyżej 64 znaki.', [], self::DOMAIN);
         }
 
         // Category must exist.
         $category = new AplineSimpleCookiesCategory($idCategory);
         if (!$idCategory || !Validate::isLoadedObject($category)) {
-            $this->errors[] = $this->trans('Please choose a valid category.', [], self::DOMAIN);
+            $this->errors[] = $this->trans('Wybierz istniejącą kategorię.', [], self::DOMAIN);
         }
 
         if (!empty($this->errors)) {

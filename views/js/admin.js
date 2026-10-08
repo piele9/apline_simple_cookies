@@ -77,7 +77,7 @@
       ta.setSelectionRange(0, ta.value.length);
       var done = function () {
         var original = copy.innerHTML;
-        copy.innerHTML = '✓ Copied';
+        copy.innerHTML = '✓ Skopiowano';
         setTimeout(function () { copy.innerHTML = original; }, 1500);
       };
       if (navigator.clipboard && navigator.clipboard.writeText) {

@@ -4,13 +4,13 @@ Data ostatniej aktualizacji: [DATA AKTUALIZACJI]
 
 ## 1. Co to są pliki cookies?
 
-Pliki cookies (tzw. „ciasteczka") to małe pliki tekstowe zapisywane na
+Pliki cookies (tzw. „ciasteczka”) to małe pliki tekstowe zapisywane na
 Twoim urządzeniu (komputerze, telefonie, tablecie) podczas korzystania
 z naszego sklepu internetowego [NAZWA SKLEPU]. Pozwalają one rozpoznać
 Twoją przeglądarkę przy kolejnej wizycie oraz zapamiętać Twoje
 preferencje.
 
-## 2. Jakie cookies używamy?
+## 2. Jakich plików cookies używamy?
 
 ### 2.1. Cookies niezbędne
 Wymagane do podstawowego działania sklepu — m.in. utrzymanie zalogowanej
@@ -35,13 +35,13 @@ Ads) oraz mierzenia skuteczności kampanii reklamowych.
 Każdy plik cookie ma określoną datę ważności — od czasu trwania sesji
 (usuwane po zamknięciu przeglądarki) do maksymalnie 24 miesięcy.
 Szczegółowy wykaz cookies wraz z czasem przechowywania znajdziesz w
-panelu „Ustawienia cookies" w stopce naszej strony.
+oknie „Ustawienia cookies” w stopce naszej strony.
 
 ## 4. Jak zarządzać cookies?
 
 Możesz w każdej chwili zmienić swoje preferencje:
 
-- Kliknij „Ustawienia cookies" w stopce naszej strony.
+- Kliknij „Ustawienia cookies” w stopce naszej strony.
 - Lub zmień ustawienia w swojej przeglądarce:
   - Chrome: https://support.google.com/chrome/answer/95647
   - Firefox: https://support.mozilla.org/pl/kb/ciasteczka
@@ -83,7 +83,7 @@ W sprawach związanych z plikami cookies i prywatnością:
 ## 8. Zmiany polityki
 
 Zastrzegamy sobie prawo do zmiany niniejszej polityki. O istotnych
-zmianach poinformujemy poprzez ponowne wyświetlenie bannera cookies przy
+zmianach poinformujemy poprzez ponowne wyświetlenie banera cookies przy
 najbliższej wizycie.
 
 ---

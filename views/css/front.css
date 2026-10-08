@@ -3,17 +3,37 @@
  * Reject and Accept are kept at equal prominence (CNIL); only the highlight
  * color differs. Bottom bar is capped so it never dominates the viewport
  * (UODO guidance); center modal is a centered overlay.
+ *
+ * Colours (1.2.0+) come from the module configuration: the module prints them
+ * in <head> as custom properties on .apline-simple-cookies.asco-banner (and
+ * .asco-style-dark). The values below are only a neutral fallback with zero
+ * specificity (:where), so the configured colours — and any theme override
+ * with a more specific selector — always win, regardless of stylesheet order.
  * @author APLINE Arkadiusz Pielechowski
  */
-.apline-simple-cookies.asco-banner {
+:where(.apline-simple-cookies.asco-banner) {
   --asco-bg: #ffffff;
-  --asco-fg: #1d2b36;
-  --asco-muted: #5b6b78;
-  --asco-border: #e0e4e8;
-  --asco-primary: #2d7a46;
+  --asco-fg: #222222;
+  --asco-muted: #555555;
+  --asco-border: #dddddd;
+  --asco-primary: #333333;
   --asco-primary-fg: #ffffff;
-  --asco-secondary-bg: #eef1f4;
-  --asco-secondary-fg: #1d2b36;
+  --asco-secondary-bg: #f2f2f2;
+  --asco-secondary-fg: #222222;
+}
+
+:where(.apline-simple-cookies.asco-banner.asco-style-dark) {
+  --asco-bg: #2b2b2b;
+  --asco-fg: #f5f5f5;
+  --asco-muted: #bbbbbb;
+  --asco-border: #444444;
+  --asco-primary: #f5f5f5;
+  --asco-primary-fg: #222222;
+  --asco-secondary-bg: #3a3a3a;
+  --asco-secondary-fg: #f5f5f5;
+}
+
+.apline-simple-cookies.asco-banner {
   position: fixed;
   left: 0;
   right: 0;
@@ -25,17 +45,6 @@
 .apline-simple-cookies.asco-banner *::before,
 .apline-simple-cookies.asco-banner *::after {
   box-sizing: border-box;
-}
-
-.apline-simple-cookies.asco-banner.asco-style-dark {
-  --asco-bg: #1d2530;
-  --asco-fg: #f3f5f7;
-  --asco-muted: #aeb9c4;
-  --asco-border: #33404e;
-  --asco-primary: #4cae6a;
-  --asco-primary-fg: #0d1b12;
-  --asco-secondary-bg: #2b3744;
-  --asco-secondary-fg: #f3f5f7;
 }
 
 .asco-hidden {

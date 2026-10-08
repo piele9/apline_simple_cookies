@@ -5,8 +5,12 @@
  * GPC, re-prompts on policy change or expiry, and auto-collapses the
  * Preferences view after 5 seconds (UODO). Vanilla JS, no jQuery.
  *
- * Tracker injection (ascoLoadScripts) is a no-op here and is implemented in
- * CP08.
+ * When Google Consent Mode v2 is enabled (ASCO_CONSENT_MODE_V2), the PHP
+ * side already sent gtag('consent','default', …) — all denied — in <head>,
+ * before this file even runs. pushConsentUpdate() below reports the
+ * visitor's real decision (fresh save, return visit, or GPC auto-reject)
+ * via gtag('consent','update', …).
+ *
  * @author APLINE Arkadiusz Pielechowski
  */
 (function () {
@@ -150,10 +154,44 @@
     // Persist client-side first so the banner never reappears, even if the
     // server round-trip fails or its Set-Cookie is dropped by a proxy.
     writeConsentCookie(decision);
+    pushConsentUpdate(decision);
     post(decision, source, function (json) {
       ascoLoadScripts((json && json.ok && json.scripts_to_load) ? json.scripts_to_load : scriptsForDecision(decision));
     });
     hideBanner();
+  }
+
+  /* ------------------------- Google Consent Mode v2 --------------------- */
+
+  // Maps our consent categories onto Google's Consent Mode v2 signals.
+  // functionality_storage / security_storage are not covered by any category
+  // here (they were already sent as 'granted' in the <head> default call)
+  // and are intentionally left alone.
+  function consentModePayload(decision) {
+    var d = decision || {};
+
+    return {
+      analytics_storage: d.analytics ? 'granted' : 'denied',
+      ad_storage: d.marketing ? 'granted' : 'denied',
+      ad_user_data: d.marketing ? 'granted' : 'denied',
+      ad_personalization: d.marketing ? 'granted' : 'denied'
+    };
+  }
+
+  // Tell Google about the visitor's actual decision. window.gtag is defined
+  // in <head> by the module's consent-default script (see
+  // renderConsentModeDefaultScript() in the PHP side) whenever Consent Mode
+  // v2 is enabled — never called otherwise, so this is a true no-op when the
+  // admin turns the feature off.
+  function pushConsentUpdate(decision) {
+    if (!CFG.consent_mode_v2 || typeof window.gtag !== 'function') {
+      return;
+    }
+    try {
+      window.gtag('consent', 'update', consentModePayload(decision));
+    } catch (e) {
+      /* never break the page over a consent signal */
+    }
   }
 
   /* ------------------------ tracker injection -------------------------- */
@@ -280,6 +318,7 @@
     // Browser asked us not to track: record a reject silently, no banner.
     var rejected = buildDecision(false);
     writeConsentCookie(rejected);
+    pushConsentUpdate(rejected);
     post(rejected, 'gpc', function (json) {
       if (json && json.ok) {
         ascoLoadScripts(json.scripts_to_load || []);
@@ -287,6 +326,9 @@
     });
   } else if (consent) {
     // Already decided and still valid: load whatever was granted, no banner.
+    // Re-send the decision to Google too — the <head> default call always
+    // starts denied, so a returning visitor needs this on every page load.
+    pushConsentUpdate(consent.d || {});
     ascoLoadScripts(scriptsForDecision(consent.d || {}));
   } else {
     showBanner('main');

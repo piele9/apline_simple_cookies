@@ -30,6 +30,51 @@ class apline_simple_cookies extends Module
     const SUBMIT_TOKEN = 'submitAscoConfig';
 
     /**
+     * Banner colour roles => CSS custom property used by views/css/front.css.
+     * Each role has one configuration key per banner style:
+     * ASCO_COLOR_LIGHT_{ROLE} and ASCO_COLOR_DARK_{ROLE}.
+     *
+     * @var string[]
+     */
+    const COLOR_VARS = [
+        'BG' => '--asco-bg',
+        'TEXT' => '--asco-fg',
+        'MUTED' => '--asco-muted',
+        'BORDER' => '--asco-border',
+        'PRIMARY' => '--asco-primary',
+        'PRIMARY_TEXT' => '--asco-primary-fg',
+        'SECONDARY' => '--asco-secondary-bg',
+        'SECONDARY_TEXT' => '--asco-secondary-fg',
+    ];
+
+    /**
+     * Palette that was hard-coded in front.css up to 1.1.0. Used only when a
+     * colour key is missing (data from a version before 1.2.0 whose upgrade
+     * script has not run yet), so an upgraded shop never changes its look.
+     * New installs get the neutral defaults from getConfigDefaults().
+     *
+     * @var string[]
+     */
+    const COLORS_BEFORE_1_2_0 = [
+        'ASCO_COLOR_LIGHT_BG' => '#ffffff',
+        'ASCO_COLOR_LIGHT_TEXT' => '#1d2b36',
+        'ASCO_COLOR_LIGHT_MUTED' => '#5b6b78',
+        'ASCO_COLOR_LIGHT_BORDER' => '#e0e4e8',
+        'ASCO_COLOR_LIGHT_PRIMARY' => '#2d7a46',
+        'ASCO_COLOR_LIGHT_PRIMARY_TEXT' => '#ffffff',
+        'ASCO_COLOR_LIGHT_SECONDARY' => '#eef1f4',
+        'ASCO_COLOR_LIGHT_SECONDARY_TEXT' => '#1d2b36',
+        'ASCO_COLOR_DARK_BG' => '#1d2530',
+        'ASCO_COLOR_DARK_TEXT' => '#f3f5f7',
+        'ASCO_COLOR_DARK_MUTED' => '#aeb9c4',
+        'ASCO_COLOR_DARK_BORDER' => '#33404e',
+        'ASCO_COLOR_DARK_PRIMARY' => '#4cae6a',
+        'ASCO_COLOR_DARK_PRIMARY_TEXT' => '#0d1b12',
+        'ASCO_COLOR_DARK_SECONDARY' => '#2b3744',
+        'ASCO_COLOR_DARK_SECONDARY_TEXT' => '#f3f5f7',
+    ];
+
+    /**
      * Hooks the module registers on install. Banner is global (compliance
      * requires it everywhere) so there is no configurable display hook.
      *
@@ -46,18 +91,18 @@ class apline_simple_cookies extends Module
     {
         $this->name = 'apline_simple_cookies';
         $this->tab = 'administration';
-        $this->version = '1.0.0';
+        $this->version = '1.2.0';
         $this->author = 'APLINE Arkadiusz Pielechowski';
         $this->need_instance = false;
         $this->bootstrap = true;
 
         parent::__construct();
 
-        $this->displayName = $this->trans('APLINE Simple Cookies for PrestaShop 9', [], 'Modules.Aplinesimplecookies.Admin');
-        $this->description = $this->trans('GDPR/UODO compliant cookie consent banner (PL+EN) with category consent, third-party tracker blocking and a consent audit log.', [], 'Modules.Aplinesimplecookies.Admin');
-        $this->confirmUninstall = $this->trans('Are you sure you want to uninstall this module? All cookie categories, entries and the consent log will be deleted.', [], 'Modules.Aplinesimplecookies.Admin');
+        $this->displayName = $this->trans('APLINE Simple Cookies dla PrestaShop 9', [], 'Modules.Aplinesimplecookies.Admin');
+        $this->description = $this->trans('Baner zgody na pliki cookies zgodny z RODO i wytycznymi UODO (PL + EN): zgoda według kategorii, blokowanie skryptów firm trzecich do czasu zgody i dziennik zgód.', [], 'Modules.Aplinesimplecookies.Admin');
+        $this->confirmUninstall = $this->trans('Na pewno odinstalować moduł? Wszystkie kategorie cookies, lista cookies i dziennik zgód zostaną usunięte.', [], 'Modules.Aplinesimplecookies.Admin');
 
-        $this->ps_versions_compliancy = ['min' => '9.0', 'max' => _PS_VERSION_];
+        $this->ps_versions_compliancy = ['min' => '9.0.0', 'max' => _PS_VERSION_];
     }
 
     /* --------------------------------------------------------------------- */
@@ -78,7 +123,7 @@ class apline_simple_cookies extends Module
         ) {
             // Roll back to a clean state so the shop is never left half-installed.
             $this->uninstall();
-            $this->_errors[] = $this->trans('Installation failed and was rolled back. Please check database permissions and try again.', [], 'Modules.Aplinesimplecookies.Admin');
+            $this->_errors[] = $this->trans('Instalacja nie powiodła się i została wycofana. Sprawdź uprawnienia do bazy danych i spróbuj ponownie.', [], 'Modules.Aplinesimplecookies.Admin');
 
             return false;
         }
@@ -218,8 +263,8 @@ class apline_simple_cookies extends Module
     private function installTabs()
     {
         $tabs = [
-            self::ADMIN_CATEGORY => 'Cookie Categories',
-            self::ADMIN_ENTRY => 'Cookies',
+            self::ADMIN_CATEGORY => 'Kategorie cookies',
+            self::ADMIN_ENTRY => 'Pliki cookies',
         ];
 
         foreach ($tabs as $className => $label) {
@@ -464,13 +509,19 @@ class apline_simple_cookies extends Module
             'ASCO_FB_PIXEL_CATEGORY' => 'marketing',
             'ASCO_HOTJAR_ID' => '',
             'ASCO_HOTJAR_CATEGORY' => 'analytics',
+            // Google Consent Mode v2 — default ON: sends the mandatory
+            // "denied by default" gtag consent signal in <head>, before any
+            // Google tag loads, then updates it once the visitor decides.
+            'ASCO_CONSENT_MODE_V2' => 1,
             'ASCO_CUSTOM_HEAD_ANALYTICS' => '',
             'ASCO_CUSTOM_HEAD_MARKETING' => '',
             'ASCO_CUSTOM_HEAD_FUNCTIONAL' => '',
             // Banner copy (PL + EN, editable in BO)
+            // Only the defaults for a new install; an existing shop keeps the
+            // copy it already has (the upgrade scripts never touch these keys).
             'ASCO_COPY_TITLE_PL' => 'Ta strona używa plików cookies',
             'ASCO_COPY_TITLE_EN' => 'This site uses cookies',
-            'ASCO_COPY_BODY_PL' => 'Ta strona korzysta z plików cookies, aby zapewnić Ci najlepsze doświadczenie zakupowe. Niektóre cookies są niezbędne do działania sklepu (np. logowanie, koszyk), inne pozwalają nam analizować ruch i pokazywać dopasowane reklamy. Możesz w każdej chwili zmienić swoje preferencje klikając „Ustawienia cookies" w stopce strony.',
+            'ASCO_COPY_BODY_PL' => 'Używamy plików cookies niezbędnych do działania sklepu, np. do logowania i obsługi koszyka. Za Twoją zgodą korzystamy też z cookies analitycznych i marketingowych, które pomagają nam ulepszać sklep i dopasowywać reklamy. Swój wybór możesz w każdej chwili zmienić, klikając „Ustawienia cookies” w stopce strony.',
             'ASCO_COPY_BODY_EN' => 'This site uses cookies to give you the best shopping experience. Some cookies are essential for the shop to work (e.g. login, cart), others help us analyze traffic and show personalized ads. You can change your preferences anytime by clicking "Cookie settings" in the footer.',
             'ASCO_COPY_BTN_ACCEPT_PL' => 'Akceptuj wszystkie',
             'ASCO_COPY_BTN_ACCEPT_EN' => 'Accept all',
@@ -482,7 +533,104 @@ class apline_simple_cookies extends Module
             'ASCO_COPY_BTN_SAVE_EN' => 'Save choices',
             'ASCO_COPY_FOOTER_LINK_PL' => 'Ustawienia cookies',
             'ASCO_COPY_FOOTER_LINK_EN' => 'Cookie settings',
+            // Banner colours (1.2.0+). Neutral palette for a new install:
+            // white / dark-grey light style, dark-grey dark style. Shops
+            // upgrading from 1.1.0 get COLORS_BEFORE_1_2_0 instead (upgrade-1.2.0.php).
+            'ASCO_COLOR_LIGHT_BG' => '#ffffff',
+            'ASCO_COLOR_LIGHT_TEXT' => '#222222',
+            'ASCO_COLOR_LIGHT_MUTED' => '#555555',
+            'ASCO_COLOR_LIGHT_BORDER' => '#dddddd',
+            'ASCO_COLOR_LIGHT_PRIMARY' => '#333333',
+            'ASCO_COLOR_LIGHT_PRIMARY_TEXT' => '#ffffff',
+            'ASCO_COLOR_LIGHT_SECONDARY' => '#f2f2f2',
+            'ASCO_COLOR_LIGHT_SECONDARY_TEXT' => '#222222',
+            'ASCO_COLOR_DARK_BG' => '#2b2b2b',
+            'ASCO_COLOR_DARK_TEXT' => '#f5f5f5',
+            'ASCO_COLOR_DARK_MUTED' => '#bbbbbb',
+            'ASCO_COLOR_DARK_BORDER' => '#444444',
+            'ASCO_COLOR_DARK_PRIMARY' => '#f5f5f5',
+            'ASCO_COLOR_DARK_PRIMARY_TEXT' => '#222222',
+            'ASCO_COLOR_DARK_SECONDARY' => '#3a3a3a',
+            'ASCO_COLOR_DARK_SECONDARY_TEXT' => '#f5f5f5',
         ];
+    }
+
+    /**
+     * Every banner colour key (ASCO_COLOR_{LIGHT|DARK}_{ROLE}).
+     *
+     * @return string[]
+     */
+    public function getColorKeys()
+    {
+        $keys = [];
+        foreach (['LIGHT', 'DARK'] as $style) {
+            foreach (array_keys(self::COLOR_VARS) as $role) {
+                $keys[] = 'ASCO_COLOR_' . $style . '_' . $role;
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Rows of the "Banner colours" table on the configuration page.
+     *
+     * @return array
+     */
+    protected function getColorRows()
+    {
+        $d = 'Modules.Aplinesimplecookies.Admin';
+        $labels = [
+            'BG' => $this->trans('Tło banera', [], $d),
+            'TEXT' => $this->trans('Tekst', [], $d),
+            'MUTED' => $this->trans('Tekst pomocniczy (opisy)', [], $d),
+            'BORDER' => $this->trans('Obramowania', [], $d),
+            'PRIMARY' => $this->trans('Wyróżniony przycisk i linki', [], $d),
+            'PRIMARY_TEXT' => $this->trans('Tekst wyróżnionego przycisku', [], $d),
+            'SECONDARY' => $this->trans('Tło pozostałych przycisków', [], $d),
+            'SECONDARY_TEXT' => $this->trans('Tekst pozostałych przycisków', [], $d),
+        ];
+
+        $rows = [];
+        foreach ($labels as $role => $label) {
+            $rows[] = [
+                'label' => $label,
+                'light_key' => 'ASCO_COLOR_LIGHT_' . $role,
+                'dark_key' => 'ASCO_COLOR_DARK_' . $role,
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Effective banner colour for one key: the configured value when valid,
+     * the pre-1.2.0 palette when the key does not exist yet (upgrade not run),
+     * otherwise an empty string (front.css keeps its neutral fallback).
+     *
+     * @param string $key
+     *
+     * @return string #rrggbb or ''
+     */
+    public function getBannerColor($key)
+    {
+        $value = Configuration::get($key);
+        if ($value === false) {
+            return isset(self::COLORS_BEFORE_1_2_0[$key]) ? self::COLORS_BEFORE_1_2_0[$key] : '';
+        }
+        $value = strtolower(trim((string) $value));
+
+        return self::isHexColor($value) ? $value : '';
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return bool
+     */
+    public static function isHexColor($value)
+    {
+        return is_string($value) && (bool) preg_match('/^#[0-9a-f]{6}$/i', $value);
     }
 
     /**
@@ -510,6 +658,10 @@ class apline_simple_cookies extends Module
             $this->exportConsentLog();
         }
 
+        if (isset($this->context->controller) && method_exists($this->context->controller, 'addCSS')) {
+            $this->context->controller->addCSS($this->_path . 'views/css/admin.css');
+        }
+
         $output = '';
 
         if (Tools::isSubmit(self::SUBMIT_TOKEN)) {
@@ -519,7 +671,7 @@ class apline_simple_cookies extends Module
                     $output .= $this->displayError($error);
                 }
             } else {
-                $output .= $this->displayConfirmation($this->trans('Settings updated.', [], 'Modules.Aplinesimplecookies.Admin'));
+                $output .= $this->displayConfirmation($this->trans('Ustawienia zostały zapisane.', [], 'Modules.Aplinesimplecookies.Admin'));
             }
         }
 
@@ -560,42 +712,56 @@ class apline_simple_cookies extends Module
         // --- Appearance & behavior ---
         $lang = (string) Tools::getValue('ASCO_DEFAULT_LANG');
         if (!in_array($lang, ['pl', 'en'], true)) {
-            $errors[] = $this->trans('Invalid default language.', [], $d);
+            $errors[] = $this->trans('Nieprawidłowy język domyślny.', [], $d);
         }
         $position = (string) Tools::getValue('ASCO_BANNER_POSITION');
         if (!in_array($position, ['bottom', 'center_modal'], true)) {
-            $errors[] = $this->trans('Invalid banner position.', [], $d);
+            $errors[] = $this->trans('Nieprawidłowe położenie banera.', [], $d);
         }
         $style = (string) Tools::getValue('ASCO_BANNER_STYLE');
         if (!in_array($style, ['light', 'dark'], true)) {
-            $errors[] = $this->trans('Invalid banner style.', [], $d);
+            $errors[] = $this->trans('Nieprawidłowy styl banera.', [], $d);
         }
         $primary = (string) Tools::getValue('ASCO_PRIMARY_BUTTON');
         if (!in_array($primary, ['accept_all', 'save_choices'], true)) {
-            $errors[] = $this->trans('Invalid primary button.', [], $d);
+            $errors[] = $this->trans('Nieprawidłowy wyróżniony przycisk.', [], $d);
         }
         $reprompt = (int) Tools::getValue('ASCO_REPROMPT_DAYS');
         if ($reprompt < 30 || $reprompt > 730) {
-            $errors[] = $this->trans('Re-prompt period must be between 30 and 730 days.', [], $d);
+            $errors[] = $this->trans('Okres ponownego pytania o zgodę musi wynosić od 30 do 730 dni.', [], $d);
+        }
+
+        // --- Banner colours ---
+        $colors = [];
+        $invalidColor = false;
+        foreach ($this->getColorKeys() as $key) {
+            $colors[$key] = strtolower(trim((string) Tools::getValue($key)));
+            if (!self::isHexColor($colors[$key])) {
+                $invalidColor = true;
+            }
+        }
+        if ($invalidColor) {
+            $errors[] = $this->trans('Każdy kolor banera musi mieć postać #RRGGBB, np. #333333.', [], $d);
         }
         $gpc = Tools::getValue('ASCO_RESPECT_GPC') ? 1 : 0;
+        $consentModeV2 = Tools::getValue('ASCO_CONSENT_MODE_V2') ? 1 : 0;
 
         // --- Audit log ---
         $logConsents = Tools::getValue('ASCO_LOG_CONSENTS') ? 1 : 0;
         $logIp = Tools::getValue('ASCO_LOG_IP') ? 1 : 0;
         $retention = (int) Tools::getValue('ASCO_LOG_RETENTION_DAYS');
         if ($retention < 30 || $retention > 3650) {
-            $errors[] = $this->trans('Log retention must be between 30 and 3650 days.', [], $d);
+            $errors[] = $this->trans('Czas przechowywania dziennika zgód musi wynosić od 30 do 3650 dni.', [], $d);
         }
 
         // --- Cookie policy ---
         $policyUrl = trim((string) Tools::getValue('ASCO_POLICY_URL'));
         if ($policyUrl !== '' && !Validate::isUrl($policyUrl) && !preg_match('#^/[\w\-/\.]*$#', $policyUrl)) {
-            $errors[] = $this->trans('The cookie policy URL is not valid.', [], $d);
+            $errors[] = $this->trans('Adres polityki cookies jest nieprawidłowy.', [], $d);
         }
         $policyVersion = trim((string) Tools::getValue('ASCO_POLICY_VERSION'));
         if (!preg_match('/^\d+\.\d+\.\d+$/', $policyVersion)) {
-            $errors[] = $this->trans('The policy version must look like 1.0.0 (digits and dots).', [], $d);
+            $errors[] = $this->trans('Wersja polityki musi mieć postać 1.0.0 (cyfry i kropki).', [], $d);
         }
 
         // --- Banner copy (PL + EN) ---
@@ -620,6 +786,7 @@ class apline_simple_cookies extends Module
         Configuration::updateValue('ASCO_PRIMARY_BUTTON', $primary);
         Configuration::updateValue('ASCO_REPROMPT_DAYS', $reprompt);
         Configuration::updateValue('ASCO_RESPECT_GPC', $gpc);
+        Configuration::updateValue('ASCO_CONSENT_MODE_V2', $consentModeV2);
         Configuration::updateValue('ASCO_LOG_CONSENTS', $logConsents);
         Configuration::updateValue('ASCO_LOG_IP', $logIp);
         Configuration::updateValue('ASCO_LOG_RETENTION_DAYS', $retention);
@@ -629,6 +796,10 @@ class apline_simple_cookies extends Module
         foreach ($copyKeys as $key) {
             // Copy is admin-trusted; store the raw trimmed value (escaped on render).
             Configuration::updateValue($key, trim((string) Tools::getValue($key)), true);
+        }
+
+        foreach ($colors as $key => $color) {
+            Configuration::updateValue($key, $color);
         }
 
         $this->persistCustomScripts();
@@ -673,16 +844,16 @@ class apline_simple_cookies extends Module
         $cats = array_keys($this->getCategorySlugOptions());
 
         if ($s['ASCO_GA4_ID'] !== '' && !preg_match('/^G-[A-Z0-9]+$/', $s['ASCO_GA4_ID'])) {
-            $errors[] = $this->trans('Google Analytics 4 ID must look like G-XXXXXXXXXX.', [], $d);
+            $errors[] = $this->trans('Identyfikator Google Analytics 4 musi mieć postać G-XXXXXXXXXX.', [], $d);
         }
         if ($s['ASCO_GTM_ID'] !== '' && !preg_match('/^GTM-[A-Z0-9]+$/', $s['ASCO_GTM_ID'])) {
-            $errors[] = $this->trans('Google Tag Manager ID must look like GTM-XXXXXXX.', [], $d);
+            $errors[] = $this->trans('Identyfikator Google Tag Manager musi mieć postać GTM-XXXXXXX.', [], $d);
         }
         if ($s['ASCO_FB_PIXEL_ID'] !== '' && !preg_match('/^\d{15,16}$/', $s['ASCO_FB_PIXEL_ID'])) {
-            $errors[] = $this->trans('Facebook Pixel ID must be 15-16 digits.', [], $d);
+            $errors[] = $this->trans('Identyfikator Facebook Pixel musi mieć 15–16 cyfr.', [], $d);
         }
         if ($s['ASCO_HOTJAR_ID'] !== '' && !preg_match('/^\d+$/', $s['ASCO_HOTJAR_ID'])) {
-            $errors[] = $this->trans('Hotjar Site ID must be numeric.', [], $d);
+            $errors[] = $this->trans('Identyfikator witryny Hotjar (Site ID) musi być liczbą.', [], $d);
         }
 
         // A configured tracker must point at an existing active category.
@@ -694,7 +865,7 @@ class apline_simple_cookies extends Module
         ];
         foreach ($pairs as $p) {
             if ($s[$p[0]] !== '' && !in_array($s[$p[1]], $cats, true)) {
-                $errors[] = $this->trans('Please choose a valid active category for each configured tracker.', [], $d);
+                $errors[] = $this->trans('Dla każdego wpisanego narzędzia śledzącego wybierz istniejącą, aktywną kategorię.', [], $d);
                 break;
             }
         }
@@ -722,10 +893,19 @@ class apline_simple_cookies extends Module
      */
     protected function getConfigTemplateVars()
     {
-        $conf = Configuration::getMultiple(array_keys($this->getConfigDefaults()));
+        $defaults = $this->getConfigDefaults();
+        $conf = Configuration::getMultiple(array_keys($defaults));
+
+        // Colour inputs always get a valid #rrggbb (type="color" cannot show an
+        // empty value), using the same resolution as the front-end.
+        foreach ($this->getColorKeys() as $key) {
+            $color = $this->getBannerColor($key);
+            $conf[$key] = ($color !== '') ? $color : $defaults[$key];
+        }
 
         return [
             'asco_conf' => $conf,
+            'asco_color_rows' => $this->getColorRows(),
             'asco_form_action' => $this->getConfigPageUrl(),
             'asco_export_url' => $this->getConfigPageUrl(['exportLog' => 1]),
             'asco_category_url' => $this->context->link->getAdminLink(self::ADMIN_CATEGORY),
@@ -738,7 +918,7 @@ class apline_simple_cookies extends Module
     }
 
     /**
-     * Active category slugs with their EN name, for the Custom Scripts category
+     * Active category slugs with their PL name, for the Custom Scripts category
      * selects (CP05) and any other admin dropdown.
      *
      * @return array
@@ -748,12 +928,12 @@ class apline_simple_cookies extends Module
         $options = [];
         try {
             $rows = Db::getInstance()->executeS(
-                'SELECT `slug`, `name_en` FROM `' . _DB_PREFIX_ . self::TABLE_CATEGORY . '`
+                'SELECT `slug`, `name_pl` FROM `' . _DB_PREFIX_ . self::TABLE_CATEGORY . '`
                  WHERE `active` = 1 ORDER BY `position` ASC'
             );
             if (is_array($rows)) {
                 foreach ($rows as $row) {
-                    $options[$row['slug']] = $row['name_en'];
+                    $options[$row['slug']] = $row['name_pl'];
                 }
             }
         } catch (\Throwable $e) {
@@ -818,7 +998,11 @@ class apline_simple_cookies extends Module
         $out = fopen('php://output', 'w');
         // UTF-8 BOM so Excel opens Polish characters correctly.
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['id', 'date_add', 'visitor_token', 'id_customer', 'decision', 'policy_version', 'ip_hash', 'language', 'source', 'user_agent']);
+        // PHP 8.4 deprecates relying on the implicit default $escape ("\\");
+        // pass it explicitly (with the historical default separator/enclosure)
+        // so the export runs warning-free on 8.4 while keeping the exact same
+        // CSV output as before.
+        fputcsv($out, ['id', 'date_add', 'visitor_token', 'id_customer', 'decision', 'policy_version', 'ip_hash', 'language', 'source', 'user_agent'], ',', '"', '\\');
 
         try {
             $rows = Db::getInstance()->executeS(
@@ -829,7 +1013,7 @@ class apline_simple_cookies extends Module
                     fputcsv($out, [
                         $row['id_asco_consent_log'], $row['date_add'], $row['visitor_token'], $row['id_customer'],
                         $row['decision'], $row['policy_version'], $row['ip_hash'], $row['language'], $row['source'], $row['user_agent'],
-                    ]);
+                    ], ',', '"', '\\');
                 }
             }
         } catch (\Throwable $e) {
@@ -856,7 +1040,7 @@ class apline_simple_cookies extends Module
             .apline-credit a { font-weight: 600; }
         </style>
         <div class="apline-credit">
-            ' . $this->trans('Module created by', [], 'Modules.Aplinesimplecookies.Admin') . '
+            ' . $this->trans('Moduł stworzony przez', [], 'Modules.Aplinesimplecookies.Admin') . '
             <a href="https://apline.pl" target="_blank" rel="noopener noreferrer">APLINE</a>
         </div>';
     }
@@ -870,8 +1054,8 @@ class apline_simple_cookies extends Module
     {
         return '
         <div class="panel">
-            <h3>&#9749; ' . $this->trans('Like this module?', [], 'Modules.Aplinesimplecookies.Admin') . '</h3>
-            <p>' . $this->trans('Need custom PrestaShop development, performance optimization or integrations?', [], 'Modules.Aplinesimplecookies.Admin') . '</p>
+            <h3>&#9749; ' . $this->trans('Podoba Ci się ten moduł?', [], 'Modules.Aplinesimplecookies.Admin') . '</h3>
+            <p>' . $this->trans('Potrzebujesz modułu na zamówienie, przyspieszenia sklepu PrestaShop albo integracji?', [], 'Modules.Aplinesimplecookies.Admin') . '</p>
             <a class="btn btn-default" href="https://apline.pl" target="_blank" rel="noopener noreferrer">&#8594; APLINE.PL</a>
         </div>';
     }
@@ -927,6 +1111,8 @@ class apline_simple_cookies extends Module
             $gpcAutoReject = true;
         }
 
+        $consentModeV2 = (bool) (int) Configuration::get('ASCO_CONSENT_MODE_V2');
+
         $data = [
             'lang' => $lang,
             'categories' => AplineSimpleCookiesCategory::getActiveCategories($lang),
@@ -940,12 +1126,88 @@ class apline_simple_cookies extends Module
             'copy' => $this->getCopyForLang($lang),
             'scripts' => $this->getScriptsConfig(),
             'gpc_auto_rejected' => $gpcAutoReject,
+            'consent_mode_v2' => $consentModeV2,
             'callback_url' => $this->context->link->getModuleLink($this->name, 'consent', [], true),
         ];
 
         $json = json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 
-        return '<script>window.ASCO = ' . $json . ';</script>';
+        $script = '<script>window.ASCO = ' . $json . ';</script>';
+
+        if ($consentModeV2) {
+            // Must run before this <script> tag and, crucially, before the
+            // GA4/GTM loader script (injected later by banner.js) — Google
+            // requires the "denied by default" signal to reach gtag.js/GTM
+            // before it initializes.
+            $script = $this->renderConsentModeDefaultScript() . $script;
+        }
+
+        return $this->renderColorStyle() . $script;
+    }
+
+    /**
+     * Banner colours from the configuration as CSS custom properties.
+     *
+     * The selectors deliberately keep the same specificity as 1.1.0's
+     * front.css rules (.apline-simple-cookies.asco-banner and
+     * .apline-simple-cookies.asco-banner.asco-style-dark): a theme or shop
+     * module that overrides the variables with a more specific selector
+     * (e.g. "body .apline-simple-cookies.asco-banner") still wins. Values are
+     * validated as #rrggbb, so nothing else can reach the <style> block.
+     *
+     * @return string
+     */
+    private function renderColorStyle()
+    {
+        $selectors = [
+            'LIGHT' => '.apline-simple-cookies.asco-banner',
+            'DARK' => '.apline-simple-cookies.asco-banner.asco-style-dark',
+        ];
+
+        $css = '';
+        foreach ($selectors as $style => $selector) {
+            $declarations = '';
+            foreach (self::COLOR_VARS as $role => $var) {
+                $color = $this->getBannerColor('ASCO_COLOR_' . $style . '_' . $role);
+                if ($color !== '') {
+                    $declarations .= $var . ':' . $color . ';';
+                }
+            }
+            if ($declarations !== '') {
+                $css .= $selector . '{' . $declarations . '}';
+            }
+        }
+
+        return $css === '' ? '' : '<style id="asco-colors">' . $css . '</style>';
+    }
+
+    /**
+     * Google Consent Mode v2 — signal denied-by-default as early as possible
+     * in <head>, ahead of any GA4/GTM loader. `functionality_storage` and
+     * `security_storage` stay granted: they are not covered by the
+     * analytics/marketing consent categories and are strictly necessary in
+     * Google's own taxonomy. The visitor's actual decision follows later via
+     * a `gtag('consent','update', …)` call from banner.js (on save, and on a
+     * return visit with a still-valid saved decision).
+     *
+     * @return string
+     */
+    private function renderConsentModeDefaultScript()
+    {
+        return '<script>'
+            . 'window.dataLayer=window.dataLayer||[];'
+            . 'function gtag(){window.dataLayer.push(arguments);}'
+            . 'window.gtag=window.gtag||gtag;'
+            . "window.gtag('consent','default',{"
+            . "'ad_storage':'denied',"
+            . "'ad_user_data':'denied',"
+            . "'ad_personalization':'denied',"
+            . "'analytics_storage':'denied',"
+            . "'functionality_storage':'granted',"
+            . "'security_storage':'granted',"
+            . "'wait_for_update':500"
+            . '});'
+            . '</script>';
     }
 
     /**
