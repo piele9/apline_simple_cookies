@@ -4,6 +4,11 @@ Wszystkie istotne zmiany modułu APLINE Simple Cookies dla PrestaShop 9.
 Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/),
 a numeracja wersji na [wersjonowaniu semantycznym](https://semver.org/lang/pl/).
 
+## [1.2.2] – 2026-10-09
+
+### Naprawiono
+- Zapis decyzji do dziennika zgód nie działał (błąd 500): klasa kontrolera `consent` miała nazwę, której PrestaShop nie znajduje — dyspozytor szuka `{nazwa_modułu}{kontroler}ModuleFrontController` z podkreśleniami nazwy modułu. Teraz `Apline_Simple_CookiesConsentModuleFrontController`; baner działał (decyzja w ciasteczku przeglądarki), ale `asco_consent_log` i eksport CSV pozostawały puste. Błąd występował we wszystkich wcześniejszych wersjach.
+
 ## [1.2.1] – 2026-10-08
 
 ### Zmieniono

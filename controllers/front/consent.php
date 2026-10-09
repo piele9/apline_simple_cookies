@@ -14,7 +14,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class AplineSimpleCookiesConsentModuleFrontController extends ModuleFrontController
+class Apline_Simple_CookiesConsentModuleFrontController extends ModuleFrontController
 {
     /** @var bool */
     public $ajax = true;

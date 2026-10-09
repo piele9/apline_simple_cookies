@@ -91,7 +91,7 @@ class apline_simple_cookies extends Module
     {
         $this->name = 'apline_simple_cookies';
         $this->tab = 'administration';
-        $this->version = '1.2.1';
+        $this->version = '1.2.2';
         $this->author = 'Arkadiusz Pielechowski';
         $this->need_instance = false;
         $this->bootstrap = true;

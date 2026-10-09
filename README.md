@@ -1,6 +1,6 @@
 # APLINE Simple Cookies — baner zgody na cookies dla PrestaShop 9
 
-![PrestaShop 9](https://img.shields.io/badge/PrestaShop-9.x-DF0067) ![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777BB4) ![Wersja](https://img.shields.io/badge/wersja-1.2.1-2ea44f) ![Licencja](https://img.shields.io/badge/licencja-MIT-blue)
+![PrestaShop 9](https://img.shields.io/badge/PrestaShop-9.x-DF0067) ![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777BB4) ![Wersja](https://img.shields.io/badge/wersja-1.2.2-2ea44f) ![Licencja](https://img.shields.io/badge/licencja-MIT-blue)
 
 Lekki baner zgody na pliki cookies zgodny z RODO, wytycznymi UODO i dyrektywą ePrivacy. Zgoda według kategorii, blokada skryptów firm trzecich do czasu zgody i dziennik zgód na potrzeby rozliczalności. Dla sklepów, które używają Google Analytics 4, Google Tag Managera, Facebook Pixela albo Hotjara i potrzebują banera, który naprawdę spełnia wymagania — a nie tylko przycisku „Akceptuj”.
 
